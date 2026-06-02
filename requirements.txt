@@ -1,0 +1,38 @@
+# Data Engineering
+pandas==3.0.3
+dask==2026.3.0
+numpy==2.4.6
+pyarrow==24.0.0
+memory-profiler==0.61.0
+
+# ML / Modelling
+xgboost==3.2.0
+scikit-learn==1.8.0
+imbalanced-learn==0.14.1
+
+# Explainability
+shap==0.52.0
+matplotlib==3.10.9
+
+# Agentic AI
+langchain==1.3.2
+langchain-core==1.4.0
+langchain-community==0.4.2
+langgraph==1.2.2
+
+# LLM Inference
+huggingface-hub==1.17.0
+
+# RAG
+faiss-cpu==1.14.2
+sentence-transformers==5.5.1
+
+# API
+fastapi==0.136.3
+uvicorn==0.48.0
+pydantic==2.13.4
+httpx==0.28.1
+
+# Dev
+pytest==9.0.3
+python-dotenv==1.2.2
