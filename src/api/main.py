@@ -4,17 +4,24 @@ Loads the realistic XGBoost model + SHAP explainer at startup.
 All endpoints are designed to be wrapped as LangGraph agent tools in Phase 3.
 """
 
+import json
+import os
 import numpy as np
 import pandas as pd
 import shap
 import xgboost as xgb
 from pathlib import Path
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Optional, AsyncGenerator
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
@@ -73,6 +80,15 @@ async def lifespan(app: FastAPI):
     print("Shutting down.")
 
 
+# ── Rate limiter ──────────────────────────────────────────────────────────────
+
+limiter = Limiter(key_func=get_remote_address)
+
+# ── Allowed origins ───────────────────────────────────────────────────────────
+# In dev: localhost React. In prod: set FRONTEND_ORIGIN env var to your domain.
+
+_FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000")
+
 # ── App ───────────────────────────────────────────────────────────────────────
 
 app = FastAPI(
@@ -82,11 +98,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[_FRONTEND_ORIGIN],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 
@@ -190,7 +208,8 @@ def health():
 
 
 @app.post("/predict", response_model=PredictResponse)
-def predict(tx: TransactionInput):
+@limiter.limit("30/minute")
+def predict(request: Request, tx: TransactionInput):
     """
     Run fraud model on a transaction.
     Agent tool: run_fraud_model(transaction) — always called first.
@@ -214,7 +233,8 @@ def predict(tx: TransactionInput):
 
 
 @app.post("/explain", response_model=ExplainResponse)
-def explain(tx: TransactionInput):
+@limiter.limit("30/minute")
+def explain(request: Request, tx: TransactionInput):
     """
     SHAP attribution for a single transaction.
     Agent tool: explain_prediction(transaction) — called when risk_score > 0.5.
@@ -256,6 +276,31 @@ def explain(tx: TransactionInput):
         top_driver=top_driver,
         summary=summary,
     )
+
+
+@app.post("/investigate")
+@limiter.limit("10/minute")
+async def investigate(request: Request, tx: TransactionInput):
+    """
+    Agentic fraud investigation with SSE streaming.
+    Runs the LangGraph ReAct agent and streams each step as it happens.
+    Client receives: tool_call → tool_result → tool_call → ... → report
+    """
+    from src.agent.graph import stream as agent_stream
+
+    tx_dict = tx.model_dump()
+    # TransactionInput uses 'type' field; tools expect it as-is
+    tx_dict["type"] = tx.type
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        try:
+            for event in agent_stream(tx_dict):
+                payload = json.dumps(event)
+                yield f"data: {payload}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @app.get("/model-info")
