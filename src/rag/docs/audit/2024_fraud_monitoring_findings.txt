@@ -1,0 +1,36 @@
+INTERNAL AUDIT REPORT: Fraud Monitoring System — Annual Review
+Report Reference: IA-2024-FC-007
+Audit Period: January 2024 – December 2024
+Issued By: Internal Audit, Financial Crime Practice
+Report Date: February 2025 | Management Response Due: March 2025
+
+EXECUTIVE SUMMARY
+Internal Audit conducted a comprehensive review of the institution's ML-based fraud detection system, alert management processes, and escalation controls. The audit identified 4 findings, including 1 High severity finding and 3 Medium severity findings. No Critical findings were identified. Management has acknowledged all findings and provided remediation commitments.
+
+FINDING 1 — HIGH: Velocity Monitoring Threshold Not Calibrated to Current Fraud Patterns
+Observation: The current velocity alert threshold (velocity_24hr > 10) was set in 2021 and has not been recalibrated against current fraud typologies. Analysis of 2024 confirmed fraud cases shows that 34% of mule account activity occurred at velocity_24hr levels between 6 and 9 — below the current threshold and therefore not generating alerts. The ML model's SHAP analysis for these missed cases shows "Txns same day" as the second-highest fraud driver.
+Risk: Fraudulent transactions passing through mule accounts without triggering alerts, resulting in undetected AML obligations.
+Recommendation: Recalibrate the velocity_24hr threshold to 6 based on the 2024 fraud case analysis. Conduct a quarterly threshold review process involving Fraud Operations and Model Risk Management.
+Management Response: Agreed. Threshold will be recalibrated to 7 (with a 30-day parallel run at 6) by Q2 2025. A quarterly calibration process will be established by Q3 2025.
+Target Completion: June 2025.
+
+FINDING 2 — MEDIUM: SHAP Attribution Logs Not Retained for Cleared Alerts
+Observation: The audit found that SHAP attribution values — which explain the ML model's fraud score for each transaction — are only retained in the case management system for alerts that result in STR filings or Tier 2 escalations. For Tier 1 alerts cleared by analysts, SHAP values are not stored. This creates a gap in the model audit trail and may impede FINTRAC examinations.
+Risk: Inability to demonstrate the basis for fraud clearance decisions; potential model governance deficiency under OSFI Guideline E-23.
+Recommendation: Update the case management system to capture and retain SHAP values for all alerts, regardless of resolution outcome. Retention period must align with PCMLTFA (5 years).
+Management Response: Agreed. IT change request submitted. Implementation expected Q1 2025.
+Target Completion: March 2025.
+
+FINDING 3 — MEDIUM: Linked Account Detection Gap
+Observation: The fraud detection system does not currently identify transactions where the destination account is controlled by the same beneficial owner as the originating account. In 2024, 8 confirmed fraud cases involved intra-customer layering that was missed because linked-account relationships were not surfaced in the alert. The ML model does not include a linked-account feature.
+Risk: Money laundering through self-transfers designed to simulate legitimate transactions.
+Recommendation: Develop a linked-account relationship graph and expose it as a feature in the next model retraining cycle. In the interim, add a manual check step in the Tier 1 analyst checklist for transactions > $10,000 CAD.
+Management Response: Partially agreed. Manual check will be added immediately. Linked-account graph feature is scheduled for the next major model retraining (Q3 2025).
+Target Completion: Immediate (manual check); September 2025 (model feature).
+
+FINDING 4 — MEDIUM: STR Filing Timeliness — 7% Filed After 30-Day Deadline
+Observation: Of 143 STRs filed in 2024, 10 (7%) were filed after the 30-calendar-day deadline required by PCMLTFA s.7. Root cause analysis identified: 6 cases where Tier 2 review delays caused timeline breaches; 4 cases where the case management system did not send reminder notifications to analysts at day 25.
+Risk: Regulatory non-compliance; potential FINTRAC administrative monetary penalty.
+Recommendation: Implement automated case management reminders at day 20 and day 28 for open STR candidates. Add a "deadline breach prevention" metric to the monthly Fraud Operations scorecard reviewed by the DCO.
+Management Response: Agreed. System reminders will be configured by end of Q1 2025. Metric added to scorecard immediately.
+Target Completion: March 2025.

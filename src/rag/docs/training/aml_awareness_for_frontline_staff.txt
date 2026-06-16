@@ -1,0 +1,30 @@
+EMPLOYEE TRAINING MODULE: AML Awareness for Frontline and Operations Staff
+Module Code: AML-101 | Completion Required: All client-facing and operations staff
+Last Reviewed: January 2024 | Next Review: January 2025
+
+WHAT IS MONEY LAUNDERING?
+Money laundering is the process of making illegally obtained funds appear legitimate. It typically involves three stages: (1) Placement — introducing illicit cash or funds into the financial system; (2) Layering — moving funds through multiple accounts or transactions to disguise their origin; (3) Integration — reintroducing the laundered funds into the legitimate economy as apparently clean money. Canada's PCMLTFA makes it a serious criminal offence to launder money or to fail to report suspicious transactions.
+
+YOUR OBLIGATIONS AS AN EMPLOYEE
+All employees at this institution are legally obligated to: report suspicious transactions or activity to the Compliance team or via the internal STR reporting channel; never tip off a customer that their account is under investigation; complete all mandatory AML training on time; and escalate any customer behaviour or transaction that seems unusual, even if you are not certain it is fraudulent.
+
+RECOGNIZING RED FLAGS IN ELECTRONIC TRANSACTIONS
+The following patterns should be escalated immediately:
+- A customer requests a large TRANSFER or CASH_OUT that would reduce their account balance to exactly zero, particularly if they cannot explain the purpose.
+- A customer makes multiple TRANSFER transactions in quick succession (high velocity) — for example, 3 or more transfers within the same hour.
+- The destination account for a transfer appears to be newly opened (customer is unsure who controls it) or shows a $0.00 balance before receiving funds.
+- A customer becomes nervous or evasive when asked about the purpose of a large transfer.
+- Transaction amounts are just below reporting thresholds (e.g., repeated transfers of $9,500 when the LCTR threshold is $10,000 — this is called structuring and is itself a criminal offence).
+
+HOW OUR FRAUD SYSTEM WORKS
+Our institution uses a machine learning model to score every TRANSFER and CASH_OUT transaction for fraud risk. The model analyzes features including the transaction amount, account balances before and after, and how many similar transactions the account has made recently. When the model flags a transaction as high risk, it is automatically held for analyst review. The model's SHAP output shows which factors most strongly influenced the fraud score, helping analysts make faster and more consistent decisions. If you see a transaction flagged and placed on hold, do not tell the customer the reason — simply advise them that additional verification is required.
+
+WHAT TO DO WHEN YOU SUSPECT FRAUD
+1. Do not confront the customer or accuse them directly.
+2. Complete the transaction normally if it has already been initiated (do not reverse it unilaterally).
+3. Complete the internal suspicious activity referral form and submit it to the Fraud Operations team within 1 business day.
+4. Preserve all notes, conversation logs, and transaction records.
+5. Do not discuss the referral with colleagues outside the Compliance and Fraud teams.
+
+PENALTIES FOR STAFF WHO FAIL TO REPORT
+Under the PCMLTFA, employees who knowingly facilitate money laundering or who tip off a customer about a pending investigation can face personal criminal charges. Negligent failure to report can result in disciplinary action up to and including termination of employment. When in doubt, always report — there is no penalty for a good-faith report that turns out to be a false alarm.

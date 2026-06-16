@@ -32,6 +32,13 @@ def build_index(docs_dir):
     docs   = load_documents(docs_dir)
     chunks = chunk_documents(docs)
 
+    if not chunks:
+        print(f"Warning: no documents found in {docs_dir}. RAG tool will return empty results.")
+        # Return a minimal valid index so the agent can still start
+        dim   = 384  # all-MiniLM-L6-v2 output dimension
+        index = faiss.IndexFlatL2(dim)
+        return index, []
+
     texts      = [chunk for chunk, source in chunks]
     embeddings = _model.encode(texts, show_progress_bar=True)
     embeddings = np.array(embeddings).astype("float32")
@@ -43,8 +50,11 @@ def build_index(docs_dir):
     return index, chunks
 
 def query_index(index, chunks, query, top_k=3):
+    if not chunks or index.ntotal == 0:
+        return ["No regulatory documents loaded. Add .txt files to src/rag/docs/ to enable RAG."]
+
     q_vec = _model.encode([query]).astype("float32")
-    distances, indices = index.search(q_vec, top_k)
+    distances, indices = index.search(q_vec, min(top_k, index.ntotal))
 
     results = []
     for idx in indices[0]:

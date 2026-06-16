@@ -1,0 +1,49 @@
+INTERNAL AUDIT REPORT: ML Fraud Model Performance Review
+Report Reference: IA-2024-MRM-003
+Audit Period: Q3–Q4 2024
+Issued By: Internal Audit, Model Risk Practice
+Report Date: January 2025
+
+SCOPE
+This review assessed the ongoing performance of the XGBoost fraud detection model in production, focusing on: (1) classification performance against confirmed fraud outcomes, (2) threshold appropriateness, (3) feature stability, and (4) compliance with OSFI Guideline E-23 model risk management requirements.
+
+MODEL PERFORMANCE SUMMARY (Q3–Q4 2024)
+Total transactions scored: 4,218,433
+Transactions flagged (risk_score >= 0.9828): 12,447 (0.295% alert rate)
+Confirmed fraud cases in scoring population: 1,089
+True positives (fraud flagged by model): 979 (recall = 89.90%)
+False positives (non-fraud flagged by model): 11,468 (precision = 7.87% of flagged)
+True negatives: correctly cleared: 4,205,896
+False negatives (fraud missed): 110
+
+Model AUC-ROC: 0.9984 (above minimum threshold of 0.98 — no action required)
+Model PR-AUC: 0.9709
+
+THRESHOLD ANALYSIS
+The current threshold of 0.9828 was validated as appropriate for the current operating environment. Lowering the threshold to 0.97 would increase recall to 93.5% but increase alert volume by 40%, creating analyst capacity concerns. Raising the threshold to 0.99 would reduce alert volume by 22% but drop recall to 84.1%, below the 85% minimum. The current threshold is maintained.
+
+FEATURE STABILITY ANALYSIS
+Population Stability Index (PSI) computed for all 12 model features against the 2022 training distribution:
+- amount: PSI = 0.04 (stable)
+- log_amount: PSI = 0.04 (stable)
+- oldbalanceOrg: PSI = 0.09 (stable)
+- newbalanceOrig: PSI = 0.07 (stable)
+- velocity_24hr: PSI = 0.18 (monitoring required — approaching 0.25 threshold)
+- velocity_1hr: PSI = 0.12 (stable)
+- velocity_3hr: PSI = 0.14 (stable)
+- type_encoded: PSI = 0.02 (stable)
+- step: PSI = 0.06 (stable)
+
+RECOMMENDATION: velocity_24hr PSI of 0.18 should be monitored monthly. If it exceeds 0.25 in Q1 2025, a model retraining must be initiated.
+
+SHAP TOP FEATURES (average absolute SHAP over flagged transactions in Q4 2024)
+1. Origin balance (before): 0.2341 average absolute SHAP — highest driver
+2. Amount ($): 0.1987
+3. Origin balance (after): 0.1823
+4. Txns same day (velocity_24hr): 0.1102
+5. Dest balance (before): 0.0934
+
+SHAP analysis confirms the model is appropriately weighting balance drain patterns and velocity features. No unexpected features in the top 5 — consistent with domain expertise.
+
+GOVERNANCE COMPLIANCE
+Model is registered in the central model inventory. Last independent validation: April 2023 (due for renewal April 2025). Model documentation is current. Approval record for current threshold is on file. One open finding from the April 2023 validation (linked-account feature gap) remains unresolved — tracked in IA-2024-FC-007.

@@ -1,0 +1,21 @@
+EMPLOYEE TRAINING MODULE: Sanctions Compliance Awareness
+Module Code: SAN-401 | Completion Required: All staff involved in payment processing and account management
+Last Reviewed: April 2024 | Next Review: April 2025
+
+WHAT ARE SANCTIONS AND WHY DO THEY MATTER?
+Economic sanctions are restrictions imposed by governments or international bodies that prohibit financial institutions from transacting with specific individuals, entities, or countries. In Canada, sanctions are administered under the United Nations Act, the Special Economic Measures Act (SEMA), the Justice for Victims of Corrupt Foreign Officials Act, and the Criminal Code (for terrorist financing). Processing a transaction in violation of sanctions — even unknowingly — can result in criminal charges against individuals and massive fines for the institution.
+
+CURRENTLY SANCTIONED JURISDICTIONS (AS OF 2024)
+The following jurisdictions are subject to comprehensive financial sanctions relevant to TRANSFER and CASH_OUT processing: Russia (financial sector restrictions under SEMA since 2022), Iran (UN Security Council comprehensive sanctions), North Korea (UN Security Council comprehensive sanctions), Syria (UN Security Council), Belarus (targeted sanctions). Transactions to or from accounts in these jurisdictions must be blocked and escalated immediately.
+
+HOW TO RECOGNIZE A POTENTIAL SANCTIONS ISSUE
+During the course of your work, escalate immediately if: a customer requests a transfer to a beneficiary bank in a sanctioned jurisdiction; the counterparty name produces a match or close match (fuzzy match) in the sanctions screening system; a customer mentions the purpose of a transfer as payment to a government entity in a sanctioned country; the transaction narrative contains references to goods or services subject to export controls (e.g., military equipment, dual-use technology, oil and gas sector). When in doubt, hold the transaction and consult Compliance before proceeding.
+
+THE TIPPING OFF PROHIBITION
+Under the Criminal Code, you must not tell a customer that their transaction has been blocked due to a sanctions match, or that their account is under review for potential sanctions violations. You may tell the customer that additional verification is required and that they will be contacted. Never reveal that sanctions screening produced a match.
+
+FALSE POSITIVE MANAGEMENT
+Sanctions screening systems produce false positives — matches on common names that do not correspond to listed individuals. If you believe a sanctions match is a false positive: do not release the transaction without Compliance sign-off; submit a false positive review request to the Sanctions Screening team; document the review outcome in the case management system. Releasing a transaction based on your personal judgment that a match is a false positive, without Compliance sign-off, is a policy violation.
+
+ESCALATION PATH
+Potential sanctions match → Hold transaction → Notify Compliance within 2 business hours → Compliance reviews and determines true positive or false positive → If true positive: freeze assets, notify Legal, file STR within 30 days, report to RCMP if terrorist financing suspected.

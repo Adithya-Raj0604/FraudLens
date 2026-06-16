@@ -1,0 +1,24 @@
+OSFI GUIDANCE: Model Risk Management for Financial Institutions
+Source: OSFI Guideline E-23, Model Risk Management
+Last Updated: November 2023
+
+DEFINITION OF A MODEL
+For OSFI purposes, a model is a quantitative method, system, or approach that applies statistical, economic, financial, or mathematical theories, techniques, and assumptions to process input data into quantitative estimates. Machine learning classifiers used for fraud detection — including gradient boosted tree models such as XGBoost — are subject to model risk management requirements.
+
+MODEL INVENTORY
+All models in production must be registered in a central model inventory. The inventory record for a fraud detection model must include: model name and version, business purpose, development date, training dataset description (e.g., PaySim 6.3M transactions, TRANSFER and CASH_OUT types), target variable (isFraud), key features and feature engineering steps, hyperparameters, validation methodology, performance metrics, production threshold, and the approval record from model risk management.
+
+MODEL VALIDATION STANDARDS
+Independent model validation must be conducted before a model enters production and at minimum every 2 years thereafter. For fraud detection models, validation must assess: discriminatory power (AUC-ROC >= 0.98 for production approval), calibration (Brier score), stability (population stability index across monthly vintages), feature importance consistency with domain knowledge, and threshold sensitivity analysis.
+
+SHAP EXPLAINABILITY REQUIREMENTS
+Where SHAP (SHapley Additive exPlanations) is used as the explainability method, model documentation must confirm: the TreeExplainer variant is used for tree-based models, SHAP values are computed at the individual transaction level for all flagged transactions, the base value (expected model output) is documented, and SHAP values are stored alongside the transaction record for audit purposes. SHAP output should confirm that the top features align with domain expectations (balance delta, velocity, transaction type).
+
+THRESHOLD GOVERNANCE
+The classification threshold (e.g., risk_score >= 0.9828) must be set through a documented business process that balances precision and recall against the cost of false positives (customer friction) and false negatives (fraud loss). Threshold changes require: a written justification referencing the precision-recall curve, sign-off from model risk management and the head of fraud operations, and a 30-day parallel-run period before full deployment.
+
+ONGOING MONITORING AND RETRAINING
+Production fraud models must be monitored monthly. Monitoring must track: model recall on confirmed fraud cases, precision, the rate of transactions above the decision threshold (alert rate), feature distribution shift (KS statistic vs. training distribution). A PSI > 0.25 for any key feature triggers a mandatory model review. Models must be retrained when the annual validation identifies performance degradation or when the training data becomes more than 18 months stale.
+
+DOCUMENTATION AND AUDIT TRAIL
+All model development notebooks, data processing scripts, validation reports, and approval records must be version-controlled and retained for the life of the model plus 5 years. For each production scoring run, the model version, input features, output score, and SHAP values must be logged to a tamper-evident audit store.

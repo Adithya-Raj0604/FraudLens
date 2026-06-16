@@ -1,0 +1,18 @@
+FINTRAC GUIDANCE: Politically Exposed Persons (PEP) and Heads of International Organizations (HIO)
+Source: PCMLTFA s.9.3, FINTRAC Guidance FIN-2021-G004
+Last Updated: April 2021
+
+DEFINITIONS
+A Politically Exposed Foreign Person (PEFP) is an individual who holds or has held one of the following positions in a foreign state: head of state or government, member of the executive council, senior government official, senior military official, senior judicial official, senior executive of a state-owned enterprise, or head of a political party. A Politically Exposed Domestic Person (PEDP) is the Canadian equivalent at the federal, provincial, or territorial level. A Head of an International Organization (HIO) leads an international body established by governments (e.g., UN agencies, IMF, World Bank).
+
+ENHANCED MEASURES FOR PEPs AND HIOs
+When a client is identified as a PEP or HIO, the institution must: (1) obtain senior management approval before establishing or continuing the business relationship; (2) take reasonable measures to establish the source of funds and source of wealth; (3) conduct enhanced ongoing monitoring of the business relationship, at minimum semi-annually.
+
+FAMILY MEMBERS AND CLOSE ASSOCIATES
+Enhanced PEP measures apply not only to the PEP/HIO themselves but also to their family members (spouse, common-law partner, children, parents, siblings) and close associates (persons known to have a close business or personal relationship). Screening systems must be configured to flag these relationships.
+
+TRANSACTION RED FLAGS FOR PEP ACCOUNTS
+The following patterns in PEP-linked accounts require immediate escalation: TRANSFER transactions exceeding $50,000 CAD to or from jurisdictions with weak AML regimes; CASH_OUT transactions that reduce the account balance to zero; velocity patterns of more than 5 transactions within a 3-hour window; transactions with no apparent business purpose given the PEP's stated occupation or role.
+
+RECORD RETENTION
+PEP/HIO determination records and the measures taken must be retained for a minimum of 5 years from the date the business relationship ends. All enhanced due diligence documentation must be reviewable by FINTRAC within 30 days of request.

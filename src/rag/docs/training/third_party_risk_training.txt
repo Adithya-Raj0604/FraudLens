@@ -1,0 +1,18 @@
+EMPLOYEE TRAINING MODULE: Third-Party and Vendor Risk Awareness
+Module Code: TPRM-201 | Completion Required: Technology, Procurement, and Risk staff
+Last Reviewed: March 2024 | Next Review: March 2025
+
+WHY THIRD-PARTY RISK MATTERS FOR FRAUD OPERATIONS
+Our fraud detection capabilities depend on a chain of third-party technology components. The XGBoost model library, the SHAP explainability framework, the sentence-transformers library used for regulatory RAG, the FAISS vector index, and the cloud infrastructure running our scoring API are all provided or maintained by third parties. A failure, vulnerability, or supply chain compromise in any of these components could impair our ability to detect fraud and meet our AML obligations.
+
+OSFI GUIDELINE B-10 REQUIREMENTS (WHAT THIS MEANS FOR YOUR ROLE)
+If your role involves selecting, contracting with, or overseeing a technology vendor used in our fraud or compliance systems, you must: conduct pre-engagement due diligence (security review, SOC 2 report review, financial stability assessment); ensure contracts include the right to audit, data residency clauses (all transaction data must remain in Canada or equivalent jurisdictions), and incident notification timelines (vendor must notify us within 4 hours of a data breach); participate in annual vendor reviews; and escalate any vendor incident that could impair fraud monitoring within 2 business hours.
+
+SOFTWARE SUPPLY CHAIN RISK
+Open-source libraries present a specific risk: a malicious package or a known vulnerability in a library like XGBoost or sentence-transformers could be exploited to manipulate model outputs or exfiltrate transaction data. Your responsibilities: keep a current Software Bill of Materials (SBOM) for all fraud-related systems; subscribe to CVE notifications for all libraries in the fraud tech stack; apply security patches within 30 days for Medium/High vulnerabilities and within 7 days for Critical vulnerabilities.
+
+RECOGNIZING A VENDOR INCIDENT
+Escalate immediately to the CISO and Fraud Operations if you observe: unexpected changes in ML model outputs or alert rates that cannot be explained by transaction volume changes; API responses from third-party services that contain unexpected data fields or error codes; vendor notification of a security incident affecting systems used in our fraud pipeline; anomalous network traffic from the scoring API or feature engineering services.
+
+DATA RESIDENCY AND PRIVACY
+All transaction data used in fraud scoring — including customer account balances, transaction amounts, and velocity counters — is subject to PIPEDA and must not be transmitted to third parties outside Canada without explicit documented approval from the Privacy Officer and Legal. Never share raw transaction data with a vendor for debugging or model improvement purposes without this approval.

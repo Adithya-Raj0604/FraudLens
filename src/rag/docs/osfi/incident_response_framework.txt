@@ -1,0 +1,22 @@
+OSFI GUIDANCE: Technology Incident Response and Reporting
+Source: OSFI Technology Incident Reporting Advisory, OSFI Guideline B-13 s.4
+Last Updated: March 2023
+
+INCIDENT CLASSIFICATION
+Technology incidents affecting fraud detection and AML systems must be classified as follows:
+- Severity 1 (Critical): Complete outage of fraud scoring or transaction monitoring. Regulatory reporting obligations at risk. Requires immediate escalation to CISO, CRO, and DCO within 30 minutes.
+- Severity 2 (High): Degraded performance causing delays > 15 minutes in fraud alert generation. Requires escalation within 2 hours and activation of manual review backup procedures.
+- Severity 3 (Medium): Non-critical system component failure with no immediate impact on monitoring. Requires resolution within 8 business hours.
+- Severity 4 (Low): Minor issues with no operational impact. Resolved in next scheduled maintenance window.
+
+OSFI REPORTING REQUIREMENTS
+A Severity 1 or Severity 2 incident affecting systems material to AML/ATF compliance must be reported to OSFI within 72 hours of detection. The initial report must include: date and time of detection, affected systems, business impact assessment, preliminary root cause, and immediate containment measures taken. A full post-incident review report must be submitted within 10 business days of resolution.
+
+FRAUD DETECTION SYSTEM OUTAGE PROCEDURES
+During any outage of the ML-based fraud scoring system (/predict, /investigate endpoints), the following manual controls must be activated: (1) all TRANSFER and CASH_OUT transactions exceeding $10,000 CAD are held for manual review by a qualified analyst; (2) transactions from accounts with velocity_24hr > 5 in the past 24 hours are automatically escalated; (3) transactions where the origin balance would be reduced to zero are flagged for same-day review.
+
+ROOT CAUSE ANALYSIS
+All Severity 1 and Severity 2 incidents require a formal root cause analysis (RCA) using a structured methodology (e.g., 5-Whys, fishbone diagram). The RCA must identify: the proximate cause, the contributing factors, the systemic weaknesses that allowed the incident to occur, and specific corrective actions with owners and target dates.
+
+MODEL DRIFT AS AN INCIDENT
+A statistically significant decline in fraud model performance — defined as a drop in recall below 85% on the monthly validation sample, or a change in the optimal threshold of more than 5 percentage points — must be treated as a Severity 2 incident. The model must be retrained or recalibrated, and the change must go through the model risk management approval process before deployment.

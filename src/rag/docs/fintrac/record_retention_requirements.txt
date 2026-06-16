@@ -1,0 +1,21 @@
+FINTRAC GUIDANCE: Record Keeping Requirements for Financial Entities
+Source: PCMLTFA s.6, Proceeds of Crime Regulations SOR/2002-184
+Last Updated: February 2023
+
+GENERAL RETENTION PERIOD
+Under the PCMLTFA, the general record retention period is 5 years from the date of the transaction or the last activity on the account to which the record relates. This applies to all transaction records, client identification records, beneficial ownership records, and STR/LCTR filing copies.
+
+SPECIFIC RECORDS AND THEIR RETENTION
+Large Cash Transaction Records (LCTR): 5 years from date of transaction. Electronic Funds Transfer Records (EFT): 5 years from date of transaction, including full details of originator, beneficiary, amount, and route. Suspicious Transaction Reports (STR): 5 years from date of filing. Client Identification Documents: 5 years from the date the account is closed. Beneficial Ownership Records: 5 years from the date the account is closed or 5 years from the date a change is recorded, whichever is later. Compliance Program documentation: 5 years from the date of the latest version.
+
+FORMAT AND ACCESSIBILITY
+Records may be kept in paper or electronic format, but must be readily retrievable and legible. For electronic records, the institution must maintain the ability to reproduce the record in a readable format throughout the retention period. If the original record was electronic (e.g., a transaction monitoring alert with ML model outputs), it must be preserved in its original form including all metadata.
+
+ML MODEL AUDIT TRAIL
+Where a machine learning model is used to generate fraud risk scores, the following must be retained for each flagged transaction: the input feature vector, the output risk score, the SHAP attribution values for the top features, the threshold applied, the model version in production at the time, and the downstream human decision (escalated, cleared, STR filed). This trail must be preserved for 5 years to support FINTRAC examinations and legal proceedings.
+
+DESTRUCTION OF RECORDS
+Records must not be destroyed before the end of the applicable retention period. A records disposition schedule must be documented and approved by the compliance officer. Accidental destruction must be reported to the DCO within 24 hours and documented in the compliance incident log.
+
+FINTRAC ACCESS RIGHTS
+FINTRAC has the right to examine any record required to be kept under the PCMLTFA. During an on-site examination, records must be made available within 3 hours of request. For written requests outside an examination, records must be provided within 30 days.

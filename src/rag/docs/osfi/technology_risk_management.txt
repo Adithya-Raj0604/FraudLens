@@ -1,0 +1,24 @@
+OSFI GUIDANCE: Technology and Cyber Risk Management
+Source: OSFI Guideline B-13, Technology and Cyber Risk Management
+Last Updated: January 2022 (effective April 2023)
+
+SCOPE AND PURPOSE
+OSFI Guideline B-13 establishes expectations for federally regulated financial institutions (FRFIs) regarding the governance, management, and control of technology and cyber risks. This includes risks arising from the deployment of machine learning models in fraud detection pipelines, automated transaction monitoring systems, and API-based scoring services.
+
+TECHNOLOGY RISK GOVERNANCE
+The board of directors must approve the institution's technology risk appetite and receive periodic reporting on technology risk exposure. Senior management is responsible for establishing a Technology Risk Management Framework (TRMF) that covers: system availability and resilience, data integrity, model risk, vendor/third-party risk, and cyber threat management.
+
+MODEL RISK IN ML FRAUD DETECTION
+Institutions using ML models (e.g., XGBoost classifiers with SHAP explainability) for fraud scoring must comply with the following: (1) All models must be documented including training data, feature engineering choices, hyperparameters, and validation methodology. (2) Model performance must be monitored monthly; if recall on fraud detection drops below 85%, an urgent model review must be triggered. (3) The decision threshold used for flagging (e.g., risk_score >= 0.9828) must be reviewed quarterly and recalibrated when class distributions shift. (4) SHAP attribution outputs must be retained as part of the model audit trail for each scored transaction.
+
+SYSTEM AVAILABILITY
+Transaction monitoring and fraud scoring systems must maintain 99.5% monthly uptime. Any unplanned outage exceeding 4 continuous hours must be reported to OSFI under the Technology Incident Reporting framework within 72 hours. During system outages, manual review procedures must be activated.
+
+THIRD-PARTY MODEL DEPENDENCIES
+When fraud detection relies on third-party components (e.g., open-source libraries such as XGBoost, SHAP, or sentence-transformers for RAG), the institution must maintain a software bill of materials (SBOM), conduct annual vendor risk assessments, and have tested contingency plans for library deprecation or security vulnerabilities.
+
+DATA INTEGRITY FOR FEATURE ENGINEERING
+Features derived from transaction data (balance deltas, velocity windows, log-transformed amounts) must be computed from a trusted source of record. Any discrepancy between the feature values used for scoring and the values in the transaction ledger must be investigated and resolved within 5 business days.
+
+PENETRATION TESTING AND ADVERSARIAL ROBUSTNESS
+Fraud detection APIs (e.g., /predict, /investigate endpoints) must be included in the annual penetration testing scope. Additionally, institutions should conduct adversarial testing of ML models to assess robustness against deliberately crafted transactions designed to evade detection. Results must be reviewed by the model risk management team.

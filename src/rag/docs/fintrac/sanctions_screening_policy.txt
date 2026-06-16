@@ -1,0 +1,21 @@
+FINTRAC / OSFI JOINT GUIDANCE: Sanctions Screening Requirements
+Source: United Nations Act, Criminal Code s.83.08, OSFI Advisory 2022-01
+Last Updated: January 2023
+
+LEGAL FRAMEWORK
+Canadian financial institutions are subject to sanctions administered by Global Affairs Canada (GAC) under the United Nations Act and the Special Economic Measures Act (SEMA), as well as counter-terrorist property freezing obligations under the Criminal Code. Institutions must not provide financial services — including processing TRANSFER or CASH_OUT transactions — to listed individuals, entities, or jurisdictions.
+
+SCREENING OBLIGATIONS
+All customers, beneficial owners, and transaction counterparties must be screened against: the UN Security Council Consolidated List, Canada's Autonomous Sanctions Lists, OFAC SDN List (for USD correspondent relationships), and any jurisdiction-specific lists applicable to the institution's operations. Screening must occur at onboarding, when any party's information changes, and on a rolling basis as lists are updated (typically within 24 hours of a list update).
+
+TRANSACTION MONITORING FOR SANCTIONS
+Automated transaction monitoring must flag transactions where: the counterparty name or account identifier matches a listed entity, the destination jurisdiction is subject to comprehensive sanctions (currently: Iran, North Korea, Russia for certain sectors, Syria, Belarus), or the transaction structure is consistent with sanctions evasion (e.g., layering through multiple jurisdictions to obscure origin).
+
+WHEN A MATCH IS DETECTED
+Upon a positive sanctions match: (1) freeze all assets immediately; (2) do not process the transaction; (3) report to FINTRAC via STR within 30 days; (4) report to the Royal Canadian Mounted Police (RCMP) if terrorist financing is suspected; (5) notify the institution's Legal and Compliance team within 2 business hours. Staff must not tip off the customer.
+
+RECORDKEEPING
+All sanctions screening records, including negative screening results for high-risk transactions, must be retained for 5 years. Screening logic version history must be maintained to demonstrate what list versions were active at the time of each screening event.
+
+PENALTIES
+Violations of the United Nations Act carry fines of up to $100,000 and/or imprisonment of up to 5 years. Violations of SEMA carry fines of up to $25,000 per day per violation. Regulatory penalties from OSFI can include capital surcharges and mandatory remediation plans.

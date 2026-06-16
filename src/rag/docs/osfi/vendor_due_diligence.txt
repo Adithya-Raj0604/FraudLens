@@ -1,0 +1,24 @@
+OSFI GUIDANCE: Third-Party Risk Management
+Source: OSFI Guideline B-10, Third-Party Risk Management
+Last Updated: September 2023
+
+SCOPE
+OSFI Guideline B-10 applies to all material third-party arrangements entered into by federally regulated financial institutions (FRFIs), including arrangements with technology vendors providing fraud detection software, cloud infrastructure, AI/ML platform services, and regulatory data providers.
+
+MATERIALITY ASSESSMENT
+An arrangement is material if its failure or disruption would have a significant impact on the institution's operations, reputation, financial condition, or compliance obligations. All fraud detection and transaction monitoring systems are presumed material given their role in AML/ATF compliance.
+
+DUE DILIGENCE BEFORE ENGAGEMENT
+Before entering a material arrangement, FRFIs must: (1) assess the vendor's financial health and operational resilience; (2) review the vendor's information security program and SOC 2 Type II reports; (3) evaluate data residency — all transaction data used in fraud scoring must remain within Canada or jurisdictions with equivalent privacy protections; (4) confirm the vendor's AML compliance posture; (5) obtain references from other financial institution clients.
+
+CONTRACTUAL REQUIREMENTS FOR MATERIAL VENDORS
+Contracts must include: right to audit and inspect clauses, data ownership and return/destruction provisions, incident notification timelines (vendor must notify institution within 4 hours of a data breach), sub-contractor disclosure requirements, and SLAs with financial penalties for uptime failures affecting fraud monitoring.
+
+ONGOING MONITORING
+FRFIs must conduct annual reviews of material vendors. Reviews must assess: any changes to the vendor's control environment, open audit findings, security incidents since last review, and any changes to the sub-contractor chain. A risk rating must be assigned (High/Medium/Low) and documented.
+
+CONCENTRATION RISK
+Institutions must assess and manage concentration risk arising from reliance on a small number of technology vendors for critical functions. Where a single vendor provides both the ML scoring infrastructure and the transaction monitoring alert system, this concentration must be disclosed in the Technology Risk Report to the board.
+
+EXIT AND SUBSTITUTION PLANNING
+For each material arrangement, the institution must maintain a documented exit plan that includes: a timeline for transitioning to an alternative provider, data migration procedures, and a tested fallback to manual review processes. Exit plans must be tested at minimum every 3 years.

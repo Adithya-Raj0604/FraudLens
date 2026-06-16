@@ -1,0 +1,24 @@
+FINTRAC GUIDANCE: Compliance Program Requirements for Financial Entities
+Source: PCMLTFA s.9(1), FINTRAC Guidance FIN-2022-G003
+Last Updated: October 2022
+
+MANDATORY COMPLIANCE PROGRAM ELEMENTS
+Every financial entity subject to the PCMLTFA must implement and maintain a written AML/ATF compliance program. The program must include: (1) written policies and procedures, (2) a designated compliance officer, (3) a risk assessment, (4) ongoing employee training, and (5) an effectiveness review conducted at least every two years.
+
+RISK ASSESSMENT REQUIREMENTS
+The risk assessment must consider inherent risks from products and services, delivery channels, geographic exposure, and customer base. For digital payment channels handling TRANSFER and CASH_OUT transactions, institutions must explicitly model the risk of rapid account drainage, mule account usage, and high-velocity electronic fund movements.
+
+ML MODEL INTEGRATION
+Where institutions deploy machine learning fraud detection models, the compliance program must document: the features used (e.g., balance delta, velocity counters, log-transformed amounts), the threshold applied for flagging (e.g., risk_score >= 0.9828), the explainability methodology (e.g., SHAP TreeExplainer), and the human review workflow triggered by model flags. Model outputs are not a substitute for human judgment — a risk score below the threshold does not preclude an STR filing if other indicators are present.
+
+POLICIES AND PROCEDURES DOCUMENTATION
+Policies must cover: customer identification and verification (CIP/KYC), ongoing monitoring of business relationships, large cash transaction reporting (LCTR) for amounts >= $10,000 CAD, EFT reporting for cross-border transfers >= $10,000 CAD, STR filing procedures, PEP and sanctions screening, and record keeping. Procedures must be reviewed and updated at minimum annually or following any material regulatory change.
+
+COMPLIANCE OFFICER RESPONSIBILITIES
+The designated compliance officer (DCO) must have sufficient authority, resources, and independence to implement the program effectively. The DCO must report directly to senior management or the board on compliance matters and cannot be overruled on STR filing decisions by business line management.
+
+EFFECTIVENESS REVIEW
+The biennial effectiveness review must be conducted by a party that is independent from the day-to-day compliance function — either an internal audit team or an external third party. The review must test transaction monitoring alert quality, STR filing timeliness, training completion rates, and KYC file completeness. Findings must be documented and remediation plans tracked to closure.
+
+RECORD KEEPING OBLIGATIONS
+Under PCMLTFA s.6, all records required under the Act must be kept for a minimum of 5 years from the date of the last business transaction to which they relate. Records must be available to FINTRAC within 30 days of a written request, or within 3 hours if FINTRAC is conducting an on-site examination.

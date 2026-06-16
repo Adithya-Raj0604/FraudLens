@@ -1,0 +1,21 @@
+INTERNAL POLICY: Account Opening Controls and Mule Account Prevention
+Document Owner: Retail Banking Operations / Financial Crime
+Effective Date: April 2024 | Review Date: April 2025
+
+PURPOSE
+This policy establishes controls to prevent fraudulent account opening, with particular focus on preventing the establishment of mule accounts used to receive and rapidly transfer stolen funds.
+
+IDENTITY VERIFICATION REQUIREMENTS AT ONBOARDING
+All new account applicants must provide: a valid government-issued photo ID, proof of address dated within 90 days, and a valid Social Insurance Number (SIN) or Business Number (BN) for entities. Digital onboarding must use a combination of document verification (AI-assisted liveness check) and credit bureau validation. Applications that fail liveness checks or produce no credit file match are referred to a human reviewer within 24 hours.
+
+MULE ACCOUNT DETECTION AT ONBOARDING
+The following application patterns must be referred to the Financial Crime team before account approval: (1) Applicant's address was used to open more than 2 accounts in the past 12 months (different applicants); (2) Email address domain was registered within the past 30 days; (3) IP address associated with the application is a known VPN exit node or Tor exit node; (4) Device fingerprint matches a device used in a prior fraud investigation; (5) Application submitted within 1 hour of a rejected application from a different identity at the same IP.
+
+EARLY-LIFE MONITORING
+All accounts in the first 90 days of existence are subject to enhanced transaction monitoring with 50% lower alert thresholds. Specifically: TRANSFER or CASH_OUT transactions > $5,000 CAD within the first 30 days require analyst review; velocity_1hr > 2 within the first 30 days triggers an automatic hold; any transaction that reduces the origin balance to $0.00 in the first 30 days is held pending review.
+
+MULE ACCOUNT WATCHLIST
+The Financial Crime team maintains a mule account watchlist populated by: confirmed mule accounts from internal investigations, accounts shared by law enforcement under a Production Order, accounts from industry information-sharing networks (Interac, CBA). Inbound transfers to watchlisted destination accounts are automatically blocked and escalated.
+
+ACCOUNT RESTRICTIONS PENDING REVIEW
+During a fraud review, the following restrictions are applied automatically: outbound TRANSFER limit reduced to $500/day; CASH_OUT disabled; international wire transfers blocked. Restrictions are lifted only upon documented clearance by a Tier 2 Fraud Analyst or above.

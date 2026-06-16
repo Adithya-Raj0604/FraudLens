@@ -1,0 +1,18 @@
+INTERNAL POLICY: High-Risk Customer Enhanced Due Diligence Review
+Document Owner: Financial Crime Risk Management
+Effective Date: January 2024 | Review Date: January 2025
+
+TRIGGER CONDITIONS FOR ENHANCED DUE DILIGENCE (EDD)
+An Enhanced Due Diligence review must be initiated when any of the following occur: (1) Customer is assigned a High Risk rating in the Customer Risk Rating Matrix; (2) A Suspicious Transaction Report is filed in relation to the customer's account; (3) ML fraud model flags the customer's transactions with risk_score >= 0.9828 on two or more occasions within 60 days; (4) Customer appears on a sanctions list or PEP database; (5) Cumulative outbound TRANSFER volume exceeds $250,000 CAD within 30 days with no established business purpose; (6) velocity_24hr exceeds 10 on any single day.
+
+EDD REVIEW COMPONENTS
+A complete EDD review must include: (1) Re-verification of customer identity using current government-issued documents; (2) Source of funds interview or documentation (bank statements, employment records, business financials); (3) Source of wealth assessment for transaction volumes exceeding $100,000 CAD; (4) Review of the customer's full 12-month transaction history including ML model scores and SHAP attributions for all flagged transactions; (5) Adverse media screening using a minimum of 3 database sources; (6) Sanctions and PEP re-screening; (7) Assessment of whether the account's activity is consistent with the customer's stated purpose and risk profile.
+
+TIMEFRAMES
+EDD must be initiated within 2 business days of a trigger event. The EDD review must be completed within 10 business days. If a decision cannot be reached within 10 business days, the account must be restricted pending completion. The decision to continue, restrict, or exit the relationship must be approved by the Chief Compliance Officer for cases involving amounts > $500,000 CAD.
+
+RELATIONSHIP EXIT PROCEDURES
+If the EDD review concludes that the relationship cannot be maintained consistent with the institution's risk appetite, the customer relationship must be exited. Exiting a relationship does not preclude an STR filing — if the EDD uncovered evidence of past suspicious activity, an STR must be filed regardless of the exit decision. Accounts being exited for AML/fraud reasons must be flagged in the institution's internal systems to prevent re-onboarding.
+
+REPORTING AND ESCALATION
+EDD findings must be summarized in a written report and approved by the Financial Crime Team Lead. Cases involving potential terrorist financing must be escalated to the DCO within 24 hours. EDD reports are retained for 7 years as part of the customer's permanent compliance file.

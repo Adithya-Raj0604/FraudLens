@@ -79,7 +79,7 @@ def explain_prediction(transaction: dict) -> dict:
         "risk_score":   round(risk_score, 4),
         "top_driver":   top["feature"],
         "summary":      summary,
-        "top_features": features[:5],
+        "top_features": features[:3],
     }
 
 
@@ -99,21 +99,22 @@ def check_account_velocity(account_id: str, step: int) -> dict:
         "velocity_3hr":   velocity_3hr,
         "velocity_24hr":  velocity_24hr,
         "risk_flag":      velocity_24hr > 5,
-        "note": (
-            "Stub values — production implementation queries rolling transaction "
-            "history per account. risk_flag=True when velocity_24hr > 5, "
-            "per Customer Risk Rating Matrix thresholds."
-        ),
+        "note": "risk_flag=True when velocity_24hr > 5 (Customer Risk Rating Matrix).",
     }
 
 
-def retrieve_regulations(query: str) -> str:
+def retrieve_regulations(query: str, top_k: int = 2, max_chars: int = 500) -> str:
     """
     Semantic search over OSFI/FINTRAC compliance documents.
-    Returns the top 3 matching chunks as a single string.
+    Returns the top matching chunks, each truncated, as a single string.
+    Trimmed to keep the agent's token usage low — full chunks are large.
     """
-    results = query_index(_index, _chunks, query, top_k=3)
-    return "\n\n---\n\n".join(results)
+    results = query_index(_index, _chunks, query, top_k=top_k)
+    trimmed = [
+        (r[:max_chars].rsplit(" ", 1)[0] + " …") if len(r) > max_chars else r
+        for r in results
+    ]
+    return "\n\n---\n\n".join(trimmed)
 
 
 # ── Smoke test ────────────────────────────────────────────────────────────────

@@ -1,0 +1,36 @@
+FINTRAC GUIDANCE: Suspicious Transaction Reporting (STR)
+Source: PCMLTFA s.7, FINTRAC Guidance FIN-2023-G001
+Last Updated: March 2023
+
+OBLIGATION TO REPORT
+Financial entities regulated under the Proceeds of Crime (Money Laundering) and Terrorist Financing Act (PCMLTFA) must file a Suspicious Transaction Report (STR) with FINTRAC when there are reasonable grounds to suspect that a transaction is related to money laundering or terrorist financing. This obligation applies regardless of transaction amount — there is no minimum dollar threshold for STR filing.
+
+REASONABLE GROUNDS STANDARD
+"Reasonable grounds to suspect" is a lower threshold than "reasonable grounds to believe." Suspicion must be based on facts, context, and rational inference, not on a hunch. Staff encountering anomalous patterns — such as an account balance draining to zero immediately following a large TRANSFER or CASH_OUT — must escalate for STR review within 30 days of the triggering transaction.
+
+TIMING REQUIREMENTS
+An STR must be submitted to FINTRAC as soon as practicable, and no later than 30 calendar days after the date on which the reporting entity first detects a fact that constitutes reasonable grounds to suspect. In urgent cases involving imminent terrorist financing risk, reporting should occur within 24 hours.
+
+HIGH-RISK INDICATORS RELEVANT TO ELECTRONIC FUNDS TRANSFERS
+1. Origin account balance reduced to zero (newbalanceOrig = $0.00) immediately following a TRANSFER exceeding $5,000 CAD.
+2. Destination account receives funds but shows a pre-existing balance of $0.00 (oldbalanceDest = $0.00), suggesting the account was opened specifically to receive the transfer.
+3. Velocity anomalies: more than 3 TRANSFER transactions within a single hour from the same originating account (velocity_1hr > 3).
+4. Cumulative transaction count for an account exceeds 10 within a 24-hour window (velocity_24hr > 10).
+5. Transaction amount is a round number (e.g., $10,000, $50,000) with no business rationale.
+6. CASH_OUT transactions immediately following large incoming TRANSFER, indicating layering activity.
+
+WHAT MUST BE INCLUDED IN AN STR
+- Full transaction details: date, time, amount, currency, account identifiers
+- Description of the suspicious activity and the grounds for suspicion
+- Any ML model risk scores or SHAP attribution values used in the detection (where applicable)
+- Prior transaction history if velocity patterns triggered the flag
+- Names and identifiers of all parties involved
+
+TIPPING OFF PROHIBITION
+Under PCMLTFA s.8, it is a criminal offence to disclose to the subject of an STR, or to any other person, that an STR has been or will be filed. Staff must not alert customers that their transactions are under review.
+
+RECORD RETENTION
+All records related to STR filings must be retained for a minimum of 5 years from the date of the report. This includes the original transaction data, the internal escalation notes, and the final STR submission confirmation number from FINTRAC's F2R portal.
+
+PENALTIES FOR NON-COMPLIANCE
+Failure to file an STR when required can result in administrative monetary penalties (AMPs) of up to $500,000 per violation for individuals and up to $1,000,000 per violation for entities, under PCMLTFA s.73.1.

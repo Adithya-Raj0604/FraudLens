@@ -1,0 +1,26 @@
+INTERNAL POLICY: Customer Risk Rating Matrix
+Document Owner: Financial Crime Risk Management
+Effective Date: February 2024 | Review Date: February 2025
+
+PURPOSE
+The Customer Risk Rating (CRR) Matrix provides a standardized methodology for assigning inherent AML/fraud risk ratings to individual and entity customers. Risk ratings drive the frequency of enhanced due diligence reviews and the sensitivity of transaction monitoring thresholds.
+
+RISK RATING CATEGORIES
+High Risk: Enhanced due diligence required. Transaction monitoring thresholds set at 50% of standard. Review frequency: quarterly.
+Medium Risk: Standard due diligence. Standard monitoring thresholds. Review frequency: annually.
+Low Risk: Simplified due diligence permitted. Relaxed monitoring thresholds. Review frequency: every 3 years.
+
+FACTORS INCREASING RISK RATING TO HIGH
+Any one of the following elevates a customer to High Risk: (1) PEP or HIO status or family member/close associate thereof; (2) Business operations in a FATF high-risk or non-cooperative jurisdiction; (3) Cash-intensive business (e.g., money services business, cannabis retailer, parking operator); (4) Prior STR filing related to the customer's account; (5) Three or more fraud alert investigations within 12 months; (6) ML model flags the account with risk_score >= 0.9828 on more than 2 occasions within 90 days; (7) Account opened within the past 60 days with cumulative outbound TRANSFER volume exceeding $25,000 CAD; (8) Destination account consistently shows oldbalanceDest = $0.00 before receiving funds.
+
+VELOCITY-BASED RISK ESCALATION
+Automated risk rating escalation is triggered when transaction monitoring detects: velocity_24hr > 10 on any single day (temporary escalation to High Risk for 30 days); velocity_3hr > 5 (same-day review required); pattern of velocity_1hr > 3 occurring on more than 3 separate days within a 30-day window.
+
+BALANCE PATTERN RISK INDICATORS
+Accounts that repeatedly exhibit newbalanceOrig = $0.00 immediately following large outbound transfers are flagged as potential fraud enablers. Three occurrences within 60 days trigger a mandatory manual customer review and temporary suspension of high-value transfer capabilities pending review outcome.
+
+RISK RATING REVIEW AND OVERRIDE
+Risk ratings are automatically recalculated monthly based on transaction behavior. Manual overrides are permitted only with documented justification and approval from the Senior Risk Officer. All overrides are logged and subject to quarterly audit review. Downgrade from High Risk to Medium/Low requires 12 consecutive months of clean transaction history and no open STR files.
+
+DOCUMENTATION REQUIREMENTS
+The CRR assessment for each customer must be documented in the customer profile system, including: the rating assigned, the factors that contributed to the rating, the date of assessment, the name of the assessing officer, and the next scheduled review date. All supporting evidence (transaction history, monitoring alerts, ML scores) must be attached to the CRR file.

@@ -1,0 +1,21 @@
+OSFI GUIDANCE: Business Continuity Planning for Critical Financial Systems
+Source: OSFI Guideline E-21, Operational Resilience and Business Continuity
+Last Updated: May 2022
+
+OPERATIONAL RESILIENCE REQUIREMENTS
+FRFIs must maintain the ability to deliver critical operations through disruptions. Transaction monitoring and fraud detection are classified as critical operations under OSFI's operational resilience framework, given their role in protecting customers and meeting AML regulatory obligations.
+
+RECOVERY TIME OBJECTIVES
+The Recovery Time Objective (RTO) for fraud detection and transaction monitoring systems must not exceed 4 hours. The Recovery Point Objective (RPO) — the maximum acceptable data loss — must not exceed 15 minutes. These targets must be validated through annual Business Continuity tests.
+
+BACKUP PROCEDURES FOR ML FRAUD SCORING
+When the primary ML scoring system is unavailable, the following tiered backup controls must be in place:
+Tier 1 (0–30 min outage): Route transactions through a simplified rules-based engine applying: flag if amount > $50,000 and type == CASH_OUT; flag if velocity_1hr > 3; flag if newbalanceOrig == 0 and amount > $10,000.
+Tier 2 (30 min – 4 hr outage): Halt non-time-critical TRANSFER transactions above $25,000 pending restoration of ML system or manual review.
+Tier 3 (> 4 hr outage): Invoke full BCP, escalate to executive crisis team, and notify OSFI per incident reporting requirements.
+
+ANNUAL TESTING REQUIREMENTS
+BCP plans for fraud detection systems must be tested annually through: tabletop exercises with fraud operations, compliance, and IT teams; simulation of a Severity 1 ML system outage; and a live failover test to the rules-based backup engine. Test results, including any gaps identified, must be documented and reported to the board Risk Committee.
+
+DATA BACKUP AND REPLICATION
+All transaction data, model inputs/outputs, and SHAP attribution records used in fraud investigations must be replicated to a geographically separate secondary data centre with a maximum 15-minute lag. Backup integrity must be verified weekly through automated checksums.

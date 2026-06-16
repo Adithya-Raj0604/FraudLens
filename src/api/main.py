@@ -6,7 +6,10 @@ All endpoints are designed to be wrapped as LangGraph agent tools in Phase 3.
 
 import json
 import os
+from dotenv import load_dotenv
 import numpy as np
+
+load_dotenv()
 import pandas as pd
 import shap
 import xgboost as xgb
@@ -298,6 +301,8 @@ async def investigate(request: Request, tx: TransactionInput):
                 payload = json.dumps(event)
                 yield f"data: {payload}\n\n"
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

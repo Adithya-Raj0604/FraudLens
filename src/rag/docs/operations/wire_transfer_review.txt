@@ -1,0 +1,24 @@
+INTERNAL POLICY: Wire Transfer and Electronic Funds Transfer Review Standards
+Document Owner: Payments Operations and Financial Crime
+Effective Date: March 2024 | Review Date: March 2025
+
+SCOPE
+This policy applies to all domestic and international electronic funds transfers (EFTs) processed through the institution's payment systems, including real-time TRANSFER and CASH_OUT transactions processed via the core banking platform.
+
+PRE-PROCESSING SCREENING
+All wire transfers must pass through automated screening before processing. Screening steps in order: (1) Sanctions check against OFAC, GAC, and UN lists; (2) ML fraud score computation — transactions scoring >= 0.9828 are held for review; (3) Velocity check — transactions triggering velocity_1hr > 3 or velocity_24hr > 10 are held regardless of ML score; (4) Balance integrity check — transactions that would reduce origin balance to exactly $0.00 above $5,000 CAD are flagged.
+
+SAME-DAY WIRE PROCESSING CUTOFFS
+Domestic wires: submitted before 3:00 PM ET for same-day settlement. International wires: submitted before 1:00 PM ET for same-day processing. Wires flagged by fraud screening after the cutoff are held overnight and reviewed the following business morning at 8:00 AM.
+
+HIGH-VALUE WIRE THRESHOLDS
+Wires exceeding $10,000 CAD (or equivalent in foreign currency) trigger mandatory FINTRAC Electronic Funds Transfer Report (EFTR) filing. Wires exceeding $50,000 CAD require dual authorization from two authorized officers. Wires exceeding $250,000 CAD require sign-off from the Head of Payments Operations and notification to the Fraud Operations team.
+
+STRUCTURING DETECTION
+The transaction monitoring system must detect structuring patterns — multiple transactions just below reporting thresholds. Specifically, three or more TRANSFER transactions between $8,000 and $9,999 CAD from the same originating account within a 5-business-day window must be flagged as potential structuring and escalated to Tier 2 fraud review. This pattern is also an STR trigger under PCMLTFA.
+
+RETURN AND REVERSAL CONTROLS
+Wire reversals requested within 24 hours of processing require Level 2 analyst approval if the wire was previously flagged by the ML model. Reversals to accounts flagged as mule accounts are automatically rejected and escalated to Financial Crimes. All reversal decisions are logged with the analyst's rationale.
+
+FINTRAC REPORTING FOR EFTS
+International EFT reports must be filed with FINTRAC within 5 business days of the transaction date. The report must include: originator details, beneficiary details, amount and currency, the financial institutions involved in the transfer chain, and the purpose of the transfer if known.

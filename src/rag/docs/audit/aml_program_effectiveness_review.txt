@@ -1,0 +1,26 @@
+INTERNAL AUDIT REPORT: AML Program Effectiveness Review
+Report Reference: IA-2024-AML-001
+Audit Period: Full Year 2024
+Issued By: Internal Audit, Financial Crime Practice
+Report Date: March 2025
+
+PURPOSE AND SCOPE
+Under PCMLTFA requirements and OSFI expectations, FRFIs must conduct periodic effectiveness reviews of their AML compliance programs. This report covers the biennial effectiveness review for the period 2023–2024. The review was conducted by Internal Audit acting as an independent function from the day-to-day compliance operations.
+
+OVERALL ASSESSMENT: SATISFACTORY WITH AREAS FOR IMPROVEMENT
+The AML compliance program is fundamentally sound, with appropriate governance structures, a qualified DCO, and a functioning transaction monitoring system. Four areas require improvement, as detailed below.
+
+TRANSACTION MONITORING COVERAGE
+The ML-based transaction monitoring system covers TRANSFER and CASH_OUT transaction types, which represent 100% of historical fraud cases in the PaySim-calibrated dataset. However, PAYMENT type transactions are not currently monitored. While fraud has not historically occurred in PAYMENT transactions, emerging typologies suggest this gap should be reassessed annually.
+
+STR QUALITY REVIEW
+A random sample of 30 STRs filed in 2024 was reviewed. 27 of 30 (90%) contained all required fields including transaction details, narrative description of suspicious activity, and grounds for suspicion. 3 STRs lacked documentation of the ML model risk score and SHAP attribution, which are now required under the internal Fraud Escalation Process. The DCO has issued a reminder to all analysts.
+
+TRAINING COMPLETION RATES
+AML training completion rate for 2024: 96% of in-scope employees. 4% remain incomplete as of audit date — all in the business banking division. DCO must ensure 100% completion before April 30, 2025.
+
+KYC FILE COMPLETENESS
+A sample of 50 high-risk customer KYC files was reviewed. 44 of 50 (88%) were complete and current. 6 files had either: an expired identity document on file (3 cases), or missing source of funds documentation for transactions > $100,000 CAD (3 cases). All 6 must be remediated within 30 days.
+
+POSITIVE OBSERVATIONS
+The linked-account detection gap identified in the 2022 review has been partially remediated through the addition of manual analyst checks. The new escalation matrix with three tiers is functioning as designed. STR filing volumes (143 in 2024 vs. 98 in 2023) reflect improved detection capability from the ML model upgrade.

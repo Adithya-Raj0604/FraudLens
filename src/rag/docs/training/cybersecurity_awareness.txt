@@ -1,0 +1,18 @@
+EMPLOYEE TRAINING MODULE: Cybersecurity Awareness for Financial Crime Systems
+Module Code: SEC-301 | Completion Required: All staff with access to fraud or compliance systems
+Last Reviewed: February 2024 | Next Review: February 2025
+
+PROTECTING FRAUD INVESTIGATION SYSTEMS
+Fraud investigation data — including ML model scores, SHAP attribution outputs, STR drafts, and customer transaction histories — is highly sensitive. Unauthorized access, modification, or disclosure of this data could: compromise active fraud investigations, expose the institution to regulatory penalties, and violate customer privacy rights under PIPEDA. All staff with access to the fraud case management system, the scoring API, or the FINTRAC reporting portal have specific security responsibilities.
+
+ACCESS CONTROL REQUIREMENTS
+Your access to fraud systems is based on least privilege — you should only have access to the systems and data necessary for your role. Do not share login credentials with colleagues, even temporarily. Multi-factor authentication (MFA) is mandatory for all fraud and compliance system access. If you believe your credentials have been compromised, immediately contact the IT Security Operations Centre and your manager.
+
+PHISHING AND SOCIAL ENGINEERING IN FINANCIAL CRIME CONTEXT
+Fraudsters may target financial crime staff specifically to gain intelligence about ongoing investigations, model thresholds, or alert rules. Be alert to: emails requesting confirmation of whether a specific account is under investigation; calls from individuals claiming to be law enforcement requesting access to the STR reporting system without a valid Production Order; requests from colleagues in other departments for ML model scores or SHAP outputs for accounts you have no shared case context for. Always verify the identity of anyone requesting sensitive case information through a second channel.
+
+HANDLING FRAUD INVESTIGATION RECORDS
+All documents related to fraud investigations — transaction reports, SHAP attribution summaries, STR drafts, analyst notes — must be stored only in approved systems. Do not: save fraud records to personal devices or USB drives; email transaction data to personal email accounts; store STR drafts in cloud storage services not approved by IT (e.g., personal Dropbox, Google Drive). Mishandling of fraud investigation records is a policy violation and may constitute a breach of PCMLTFA requirements.
+
+INCIDENT REPORTING
+If you discover or suspect: unauthorized access to the fraud scoring API or case management system; a data breach involving customer transaction records; manipulation of ML model outputs or alert thresholds; exfiltration of STR filing data — report immediately to the Information Security Operations Centre (ISOC) at the internal security hotline and to your manager. Do not attempt to investigate or remediate a cybersecurity incident yourself. Do not delete or modify any systems or records until IT Security has been notified.

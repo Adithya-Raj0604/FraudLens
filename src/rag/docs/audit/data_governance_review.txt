@@ -1,0 +1,31 @@
+INTERNAL AUDIT REPORT: Data Governance and Feature Engineering Integrity Review
+Report Reference: IA-2024-DATA-002
+Audit Period: Q4 2024
+Issued By: Internal Audit, Technology and Data Practice
+Report Date: December 2024
+
+PURPOSE
+This review assessed the integrity and governance of transaction data used as inputs to the ML fraud detection model. Specifically, the audit focused on the accuracy of engineered features — balance deltas, velocity counters, and log-transformed amounts — against the source transaction ledger.
+
+FEATURE ACCURACY TESTING
+A sample of 1,000 recently scored transactions was selected. For each transaction, audit independently recalculated all 12 model input features from the core banking ledger and compared them to the values used in the fraud scoring run.
+
+Results:
+- step, type_encoded, amount, log_amount: 100% match (no discrepancies)
+- oldbalanceOrg, newbalanceOrig, oldbalanceDest, newbalanceDest: 100% match
+- velocity_cumcount: 99.8% match (2 discrepancies traced to a timezone bug in the feature pipeline for transactions occurring exactly at midnight — patch applied)
+- velocity_1hr: 99.7% match (3 discrepancies — same root cause as above)
+- velocity_3hr: 99.7% match
+- velocity_24hr: 99.6% match (4 discrepancies — midnight timezone bug)
+
+FINDING: Timezone Bug in Velocity Feature Pipeline
+The velocity feature computation pipeline uses UTC timestamps internally but the window boundaries were calculated using local time (ET/PT depending on server). For transactions occurring within 60 minutes of midnight local time, window assignments were incorrect. This affected 9 of 1,000 sampled transactions (0.9%). The bug has been patched and a regression test added to the CI/CD pipeline.
+
+DATA LINEAGE DOCUMENTATION
+Data lineage from the core banking ledger to the fraud scoring API was mapped and documented. The audit confirms the following pipeline: Core Banking System → Event Stream (Kafka) → Feature Engineering Service → Scoring API → Case Management System. Latency from transaction event to score availability: median 2.3 seconds, 99th percentile 8.1 seconds.
+
+AUDIT TRAIL COMPLETENESS
+For 995 of 1,000 sampled transactions, complete audit trail was available: input feature vector, model version, output score, SHAP values, and analyst decision. For 5 transactions (Tier 1 cleared), SHAP values were not retained — consistent with Finding 2 in IA-2024-FC-007 (open remediation in progress).
+
+RECOMMENDATIONS
+All open recommendations are tracked in the central audit management system. The timezone bug has been resolved. SHAP retention for cleared alerts is the responsibility of the Fraud Operations team (IA-2024-FC-007 Finding 2, target March 2025). Data lineage documentation to be published to the model inventory by January 31, 2025.

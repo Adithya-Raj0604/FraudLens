@@ -1,0 +1,26 @@
+FINTRAC GUIDANCE: Know Your Customer (KYC) and Customer Identification
+Source: PCMLTFA s.6, Client Identification Methods (2023 Update)
+Last Updated: June 2023
+
+WHEN IDENTIFICATION IS REQUIRED
+Financial entities must identify clients when: opening an account, conducting a cash transaction of $10,000 CAD or more, conducting an international EFT of $1,000 CAD or more, when there are reasonable grounds to suspect money laundering, or when the transaction involves a politically exposed person (PEP).
+
+IDENTIFICATION METHODS — INDIVIDUALS
+Acceptable methods for identifying an individual include: (1) government-issued photo ID with name, date of birth, and unique identifier; (2) dual-process method combining two reliable sources (e.g., a utility bill + credit file); (3) credit file confirmation from a Canadian credit bureau; or (4) confirmation from a financial institution with which the client has an existing account.
+
+BENEFICIAL OWNERSHIP
+For entities (corporations, trusts, partnerships), the institution must identify all beneficial owners who directly or indirectly own or control 25% or more of the entity. This requires collecting full legal name, date of birth, address, and occupation for each beneficial owner. Beneficial ownership records must be updated at minimum every 3 years or when a material change is detected.
+
+MULE ACCOUNT RED FLAGS
+The following patterns during account opening or early usage are indicative of mule account activity and must trigger enhanced due diligence:
+- Account opened with minimal documentation and funded immediately via large TRANSFER from an unknown source
+- Transaction velocity exceeding 5 outbound transfers within the first 30 days of account opening
+- Destination balance of $0.00 before and after receiving funds (funds passed through immediately)
+- Origin balance draining to exactly $0.00 post-transfer with no corresponding business purpose
+- IP geolocation inconsistent with stated residential address
+
+ONGOING MONITORING
+Institutions must conduct ongoing monitoring of business relationships to detect changes in risk profile. For high-risk accounts, monitoring must occur at minimum quarterly. Transaction monitoring systems must flag accounts where the cumulative 24-hour transfer volume exceeds the established baseline by more than 3 standard deviations.
+
+RECORD RETENTION FOR KYC
+KYC records must be retained for 5 years after the account is closed or the business relationship ends. For transactions, records must be kept for 5 years from the transaction date. All KYC documents must be stored in a retrievable format and made available to FINTRAC within 3 hours during an on-site examination.
