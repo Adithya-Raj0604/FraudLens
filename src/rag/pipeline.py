@@ -1,9 +1,29 @@
 from pathlib import Path
+import pickle
 import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
 
 _model = SentenceTransformer("all-MiniLM-L6-v2")
+
+
+def save_index(index, chunks, out_dir):
+    """Persist a built FAISS index + its chunks to disk (run at Docker build time)."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    faiss.write_index(index, str(out / "faiss.index"))
+    with open(out / "chunks.pkl", "wb") as f:
+        pickle.dump(chunks, f)
+    print(f"Saved index ({index.ntotal} vectors, {len(chunks)} chunks) to {out}")
+
+
+def load_index(out_dir):
+    """Load a pre-built FAISS index + chunks from disk (avoids re-encoding at startup)."""
+    out = Path(out_dir)
+    index = faiss.read_index(str(out / "faiss.index"))
+    with open(out / "chunks.pkl", "rb") as f:
+        chunks = pickle.load(f)
+    return index, chunks
 
 def load_documents(docs_dir):
     TextFiles = Path(docs_dir).rglob("*.txt")

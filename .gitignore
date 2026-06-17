@@ -11,6 +11,9 @@ mlruns/
 mlartifacts/
 mlflow.db
 
+# Pre-built RAG index (regenerated at Docker build via `python -m src.rag.build_index`)
+src/rag/index/
+
 # Python
 __pycache__/
 *.pyc

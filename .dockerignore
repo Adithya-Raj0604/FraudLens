@@ -1,0 +1,31 @@
+# Secrets — NEVER bake into the image (key comes from SSM at runtime)
+.env
+.env.*
+
+# Virtual env / Python caches
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Frontend (built + served separately via S3/CloudFront)
+frontend/
+
+# Data + notebooks + experiment tracking (not needed in the API image)
+Dataset/
+notebooks/
+mlruns/
+mlartifacts/
+mlflow.db
+
+# Pre-built index is regenerated inside the image (RUN python -m src.rag.build_index)
+src/rag/index/
+
+# Repo meta
+.git/
+.gitignore
+.dockerignore
+.claude/
+tests/
+*.md
+*.pdf

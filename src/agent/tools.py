@@ -11,11 +11,20 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.api.main import build_feature_vector, flagged_features, risk_label, state, FEATURE_COLS, FEATURE_LABELS
-from src.rag.pipeline import build_index, query_index
+from src.rag.pipeline import build_index, load_index, query_index
 
-# ── RAG index — built once at module load ─────────────────────────────────────
-_DOCS_DIR = Path(__file__).resolve().parents[2] / "src" / "rag" / "docs"
-_index, _chunks = build_index(str(_DOCS_DIR))
+# ── RAG index ─────────────────────────────────────────────────────────────────
+# Prefer a pre-built index (baked into the Docker image at build time) so cold
+# starts don't re-encode the docs. Fall back to building it for local dev.
+_RAG_DIR   = Path(__file__).resolve().parents[2] / "src" / "rag"
+_DOCS_DIR  = _RAG_DIR / "docs"
+_INDEX_DIR = _RAG_DIR / "index"
+
+if (_INDEX_DIR / "faiss.index").exists():
+    _index, _chunks = load_index(str(_INDEX_DIR))
+    print(f"Loaded pre-built RAG index: {_index.ntotal} vectors")
+else:
+    _index, _chunks = build_index(str(_DOCS_DIR))
 
 
 # ── Tools ─────────────────────────────────────────────────────────────────────

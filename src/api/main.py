@@ -65,9 +65,34 @@ class ModelState:
 state = ModelState()
 
 
+def load_anthropic_key_from_ssm() -> None:
+    """
+    In AWS, fetch ANTHROPIC_API_KEY from SSM Parameter Store (SecureString) and
+    place it in the environment before the agent is built.
+
+    Local dev is unaffected: .env already provides the key, so this is skipped.
+    To enable in Lambda, set env var ANTHROPIC_API_KEY_SSM_PARAM to the parameter
+    name (e.g. /fraudlens/anthropic-api-key) and grant the role ssm:GetParameter.
+    """
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        return  # already provided (local .env or a plain Lambda env var)
+
+    param_name = os.environ.get("ANTHROPIC_API_KEY_SSM_PARAM")
+    if not param_name:
+        return  # nothing configured — nothing to do
+
+    import boto3
+    ssm = boto3.client("ssm")
+    resp = ssm.get_parameter(Name=param_name, WithDecryption=True)
+    os.environ["ANTHROPIC_API_KEY"] = resp["Parameter"]["Value"]
+    print(f"Loaded ANTHROPIC_API_KEY from SSM parameter '{param_name}'")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load model + SHAP explainer once at startup."""
+    load_anthropic_key_from_ssm()
+
     print("Loading XGBoost model...")
     state.model = xgb.XGBClassifier()
     state.model.load_model(str(MODEL_PATH))
