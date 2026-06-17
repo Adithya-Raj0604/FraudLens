@@ -5,3 +5,13 @@ models/threshold_realistic.txt
 models/xgboost_fraud.json
 models/xgboost_fraud_realistic.json
 .env
+
+# MLflow local tracking store
+mlruns/
+mlartifacts/
+mlflow.db
+
+# Python
+__pycache__/
+*.pyc
+venv/

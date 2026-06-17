@@ -83,22 +83,24 @@ def explain_prediction(transaction: dict) -> dict:
     }
 
 
-def check_account_velocity(account_id: str, step: int) -> dict:
+def check_account_velocity(transaction: dict) -> dict:
     """
-    Return velocity stats for an account at a given simulation hour.
-    Stub — in production this would query a transaction history database.
+    Return velocity stats for the originating account.
+    In production this would query a rolling transaction-history store keyed by
+    account_id; in this demo it surfaces the velocity features already on the
+    transaction so the agent can reason over behavioural frequency (and the
+    numbers stay consistent with the transaction under investigation).
     """
-    velocity_1hr  = 2
-    velocity_3hr  = 4
-    velocity_24hr = 7
+    v1  = int(transaction.get("velocity_1hr", 0))
+    v3  = int(transaction.get("velocity_3hr", 0))
+    v24 = int(transaction.get("velocity_24hr", 0))
 
     return {
-        "account_id":     account_id,
-        "step":           step,
-        "velocity_1hr":   velocity_1hr,
-        "velocity_3hr":   velocity_3hr,
-        "velocity_24hr":  velocity_24hr,
-        "risk_flag":      velocity_24hr > 5,
+        "velocity_1hr":      v1,
+        "velocity_3hr":      v3,
+        "velocity_24hr":     v24,
+        "velocity_cumcount": int(transaction.get("velocity_cumcount", 0)),
+        "risk_flag":         v24 > 5,
         "note": "risk_flag=True when velocity_24hr > 5 (Customer Risk Rating Matrix).",
     }
 
@@ -148,7 +150,7 @@ if __name__ == "__main__":
         print(f)
 
     print("\n=== check_account_velocity ===")
-    print(check_account_velocity("C1234567890", 1))
+    print(check_account_velocity(sample_tx))
 
     print("\n=== retrieve_regulations ===")
     print(retrieve_regulations("account balance drained fraud escalation")[:500])

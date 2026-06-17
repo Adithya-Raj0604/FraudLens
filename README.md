@@ -29,16 +29,16 @@ XGBoost + SMOTE → xgboost_fraud_realistic.json (1.75MB)
 SHAP TreeExplainer
     │
     ▼
-LangGraph Agent ──► run_fraud_model()
-                ──► explain_prediction()
-                ──► retrieve_regulations()
+LangGraph Agent ──► run_fraud_model()        (Claude Haiku 4.5
+                ──► explain_prediction()       ReAct orchestration)
+                ──► retrieve_regulations()  ◄── FAISS RAG (OSFI/FINTRAC)
                 ──► check_account_velocity()
                     │
                     ▼
-              FastAPI (Docker → AWS Lambda)
+              FastAPI + SSE streaming   (Docker → AWS Lambda — planned)
                     │
                     ▼
-              React Frontend (CloudFront + S3)
+              React Frontend            (CloudFront + S3 — planned)
 ```
 
 ---
@@ -150,6 +150,51 @@ The realistic model's metrics represent honest performance. In production, balan
 
 ---
 
+## Experiment Tracking (MLflow)
+
+Both models are trained as separate **MLflow runs** under the `fraudlens-xgboost` experiment, making the leakage investigation reproducible and auditable side-by-side. Each run logs:
+
+- **Parameters** — feature set, feature list, XGBoost hyperparameters, resampling strategy
+- **Metrics** — ROC-AUC, PR-AUC, tuned threshold, precision/recall/F1, full confusion-matrix counts, and metrics at the default 0.5 threshold for comparison
+- **Artifacts** — the precision-recall curve plot and the serialized XGBoost model (`mlflow.xgboost.log_model`)
+
+```bash
+python src/ml/train.py                                      # trains both models, logs both runs
+mlflow ui --backend-store-uri sqlite:///mlflow.db           # http://localhost:5000 to compare runs
+```
+
+> Tracking uses a SQLite backend (`mlflow.db`) — MLflow 3.x deprecated the legacy file store in favour of a DB backend, which also enables the model registry.
+
+### Side-by-side run comparison
+
+The MLflow comparison view turns the leakage investigation into reproducible, auditable evidence:
+
+| Metric | Full (with leakage) | Realistic (production) |
+|---|---|---|
+| PR-AUC | 0.996 | 0.971 |
+| Precision (fraud) | 1.000 | 0.944 |
+| Recall (fraud) | 0.996 | 0.899 |
+| F1 (fraud) | 0.998 | 0.921 |
+| F1 @ default 0.50 threshold | 0.987 | 0.621 |
+| False positives (of 552,439 legit) | 0 | 88 |
+| False negatives (of 1,643 fraud) | 6 | 166 |
+| ROC-AUC | 0.9986 | 0.9984 |
+
+Two findings this table makes obvious:
+
+1. **The leakage smoking gun.** The full-feature model produces *zero* false positives and only 6 false negatives across 554k test transactions — performance no honest fraud model achieves. That "too perfect" signature is exactly what the leaked `orig_zero_after` / `dest_unchanged` features inject. The realistic model's 88 FP / 166 FN is what real-world difficulty looks like.
+2. **ROC-AUC is misleading on imbalanced data.** Both models score ~0.998 ROC-AUC despite very different real-world quality — which is precisely why this project reports **PR-AUC, precision, and recall** as headline metrics, never ROC-AUC or accuracy.
+
+**Threshold-tuning value:** the realistic model scores just 0.621 F1 at the default 0.50 threshold, but 0.921 after tuning to 0.983 on the precision-recall curve — a concrete demonstration of why threshold selection is non-negotiable on imbalanced data.
+
+![MLflow run comparison — metrics diff](notebooks/eda_output/mlflow/run_comparison_table.png)
+*MLflow metrics comparison — every metric side-by-side; the leaky run is "too perfect" across the board.*
+
+![MLflow parallel coordinates](notebooks/eda_output/mlflow/parallel_coordinates.png)
+*Parallel-coordinates view across PR-AUC, precision, recall, and F1 — the lines diverge where it matters (ROC-AUC, which doesn't, is deliberately excluded).*
+
+---
+
 ## Technology Stack
 
 | Layer | Technology |
@@ -157,8 +202,9 @@ The realistic model's metrics represent honest performance. In production, balan
 | Data Engineering | Pandas (chunked), Dask 2026.3.0, NumPy, PyArrow |
 | ML / Modelling | XGBoost 3.2.0, Scikit-learn 1.8.0, imbalanced-learn 0.14.1 (SMOTE) |
 | Explainability | SHAP 0.52.0 (TreeExplainer), Matplotlib |
+| Experiment Tracking | MLflow 3.13.0 (params, metrics, artifacts, model logging) |
 | Agentic AI | LangGraph 1.2.2, LangChain 1.3.2 |
-| LLM Inference | HuggingFace Inference API (Mistral-7B-Instruct) |
+| LLM Inference | Anthropic Claude Haiku 4.5 (via API, `langchain-anthropic`) |
 | RAG | FAISS 1.14.2, sentence-transformers 5.5.1 |
 | API | FastAPI 0.136.3, Pydantic 2.13.4, Uvicorn, SSE |
 | Frontend | React 18, Vite, Tailwind CSS, Recharts, Axios |
@@ -184,8 +230,12 @@ XGBoost produces exact SHAP attributions via `TreeExplainer`. Neural network SHA
 ### Why FAISS over Pinecone or Weaviate?
 FAISS runs locally with zero cost and zero latency overhead for ~50 compliance documents. For production at millions of documents, multi-user access, and SLA requirements, Pinecone or Weaviate is appropriate. This is an explicit scope decision documented here rather than a technical limitation.
 
-### Why HuggingFace Inference API over Ollama in Lambda?
-Ollama requires loading 4–7GB model weights into the Lambda container, producing a 10GB+ Docker image and 60–90s cold starts. HuggingFace Inference API offloads inference to HuggingFace's servers, keeps the Docker image under 3GB, eliminates cold start latency, and is free for ~150 requests/month at portfolio scale.
+### Why a hosted LLM API (Claude) over self-hosting a model in Lambda?
+Self-hosting (e.g. Ollama or a HuggingFace model in-container) requires loading 4–7GB of weights into the Lambda container, producing a 10GB+ Docker image and 60–90s cold starts. A hosted inference API offloads the model entirely, keeps the Docker image under 3GB, and eliminates cold-start latency.
+
+**Why Claude Haiku 4.5 specifically?** The agent depends on reliable tool-calling and structured output — Claude's tool-use is well-suited to the LangGraph ReAct loop and produces clean, citation-grounded investigator reports. Haiku is the cheapest, fastest model in the family, which keeps per-investigation cost low. *(Note: the original project scope specced HuggingFace Mistral-7B; it was switched to Claude during build for materially more reliable tool-calling and report quality — a deliberate change, not a default.)*
+
+**Cost control.** Because the LLM is metered per token, the agent was optimized to minimize tokens: a terse system prompt and tool schemas, truncated RAG retrieval payloads, and `max_tokens` bounding the report. This brought cost from ~2¢ to ~0.5¢ per investigation.
 
 ### Why EventBridge warm ping over provisioned Lambda concurrency?
 Provisioned concurrency costs $40–100/month. An EventBridge rule pinging every 10 minutes costs ~$0.00/month (4,320 pings vs 14M free events/month) and achieves the same demo reliability. Provisioned concurrency is appropriate at production traffic volumes; EventBridge is appropriate for a portfolio demo.
@@ -195,7 +245,9 @@ SSE is one-directional (server → client), which is exactly what agent step str
 
 ---
 
-## Infrastructure Cost (~$0.29/month)
+## Infrastructure Cost
+
+**AWS infrastructure (~$0.29/month when deployed):**
 
 | Service | Cost | Notes |
 |---|---|---|
@@ -206,10 +258,17 @@ SSE is one-directional (server → client), which is exactly what agent step str
 | S3 | ~$0.00 | ~50MB total |
 | DynamoDB | ~$0.00 | KB-scale drift logs |
 | EventBridge | ~$0.00 | 4,320 pings/mo |
-| HuggingFace | $0.00 | Not AWS — free tier |
-| **Total** | **~$0.29** | |
+| **Subtotal** | **~$0.29/mo** | |
 
-> Set a billing alert at $5/month before deploying.
+**LLM inference (Anthropic Claude Haiku 4.5, metered per token):**
+
+| | Cost |
+|---|---|
+| Per investigation | **~0.5¢** (~2,400 input + ~800 output tokens) |
+| A 20-run demo session | ~10¢ |
+| $5 of credit | ~1,000 investigations |
+
+> Inference is pay-as-you-go, not a flat fee — you only pay when the agent runs. Set an Anthropic billing alert and an AWS billing alert at $5 each before deploying.
 
 ---
 
@@ -248,9 +307,15 @@ pytest tests/ -v
 ## Project Status
 
 - [x] Phase 1 — ML Core (Dask + XGBoost + SHAP + FastAPI)
-- [ ] Phase 2 — LangGraph learning track
-- [ ] Phase 3 — Agentic layer + RAG + SSE streaming
-- [ ] Phase 4 — React frontend + AWS deployment + MLOps hardening
+- [x] Phase 2 — LangGraph learning track (toy agent)
+- [x] Phase 3 — Agentic layer + RAG (FAISS over 25 OSFI/FINTRAC docs) + SSE streaming
+- [~] Phase 4 — React frontend + AWS deployment + MLOps hardening
+  - [x] React + TypeScript + Tailwind + Recharts frontend (form, live SSE trace, SHAP chart, investigator report, API health indicator)
+  - [ ] Docker + AWS Lambda / API Gateway deployment
+  - [ ] CloudFront + S3 hosting for the frontend
+  - [ ] `/monitor` endpoint + DynamoDB drift logging
+  - [ ] GitHub Actions CI/CD
+  - [ ] Architecture diagram tab (static SVG)
 
 ---
 

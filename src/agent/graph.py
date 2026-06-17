@@ -25,6 +25,7 @@ from langgraph.prebuilt import create_react_agent
 from src.agent.tools import (
     run_fraud_model,
     explain_prediction,
+    check_account_velocity,
     retrieve_regulations,
 )
 
@@ -35,9 +36,8 @@ SYSTEM_PROMPT = """You are an expert fraud investigator at a Canadian financial 
 Tool order:
 1. run_fraud_model — always first; returns the risk score.
 2. explain_prediction — only if risk_score >= 0.4; returns SHAP attributions.
-3. retrieve_regulations — query OSFI/FINTRAC guidance relevant to your findings.
-
-The transaction includes velocity fields (velocity_1hr/3hr/24hr/cumcount) — read them directly; no tool needed.
+3. check_account_velocity — assess the account's transaction frequency.
+4. retrieve_regulations — query OSFI/FINTRAC guidance relevant to your findings.
 
 Then write a concise FRAUD INVESTIGATION REPORT with: transaction details; risk score and label; key ML/SHAP findings; velocity context; cited regulatory obligations; and a clear RECOMMENDATION (ESCALATE, MONITOR, or CLEAR) with justification. Be succinct — use short bullets, no filler."""
 
@@ -53,6 +53,12 @@ def tool_run_fraud_model(transaction: dict) -> dict:
 def tool_explain_prediction(transaction: dict) -> dict:
     """SHAP attributions for the fraud score (use when risk_score >= 0.4). Input: the transaction dict."""
     return explain_prediction(transaction)
+
+
+@tool
+def tool_check_account_velocity(transaction: dict) -> dict:
+    """Account transaction-velocity stats. Input: the transaction dict."""
+    return check_account_velocity(transaction)
 
 
 @tool
@@ -74,6 +80,7 @@ def build_agent():
     tools = [
         tool_run_fraud_model,
         tool_explain_prediction,
+        tool_check_account_velocity,
         tool_retrieve_regulations,
     ]
 

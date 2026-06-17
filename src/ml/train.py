@@ -23,12 +23,40 @@ from sklearn.metrics import (
 )
 from imblearn.over_sampling import SMOTE
 import xgboost as xgb
+import mlflow
+import mlflow.xgboost
+
+import sys
+# Windows consoles default to cp1252; force UTF-8 so the ✓/─/→ glyphs in the
+# progress output don't crash when stdout is redirected to a file.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 FEATURES_PATH = Path("Dataset/features.parquet")
 MODEL_DIR     = Path("models")
 OUTPUT_DIR    = Path("notebooks/eda_output")
 
 TARGET_COL = "isFraud"
+
+# ── MLflow experiment tracking ────────────────────────────────────────────────
+EXPERIMENT_NAME  = "fraudlens-xgboost"
+# SQLite backend — MLflow 3.x deprecated the file store; a DB backend is the
+# current standard and unlocks the model registry. View with:
+#   mlflow ui --backend-store-uri sqlite:///mlflow.db
+MLFLOW_TRACKING  = "sqlite:///mlflow.db"
+
+# XGBoost hyperparameters — defined once so they can be both trained and logged
+XGB_PARAMS = dict(
+    n_estimators=300,
+    max_depth=6,
+    learning_rate=0.1,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    eval_metric="aucpr",        # area under precision-recall curve
+    tree_method="hist",         # fast histogram method
+    n_jobs=-1,
+    random_state=42,
+)
 
 # Full feature set (includes PaySim balance leakage — near-perfect but unrealistic)
 FEATURE_COLS_FULL = [
@@ -108,18 +136,7 @@ def apply_smote(X_train, y_train) -> tuple[np.ndarray, np.ndarray]:
 
 def train_model(X_res, y_res) -> xgb.XGBClassifier:
     print_section("4 / 6  —  Train XGBoost")
-    model = xgb.XGBClassifier(
-        n_estimators=300,
-        max_depth=6,
-        learning_rate=0.1,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        use_label_encoder=False,
-        eval_metric="aucpr",        # area under precision-recall curve
-        tree_method="hist",         # fast histogram method
-        n_jobs=-1,
-        random_state=42,
-    )
+    model = xgb.XGBClassifier(**XGB_PARAMS)
     t = time.time()
     print("  Training XGBoost (300 trees, hist method)...")
     model.fit(X_res, y_res, verbose=False)
@@ -127,10 +144,11 @@ def train_model(X_res, y_res) -> xgb.XGBClassifier:
     return model
 
 
-def tune_threshold(model: xgb.XGBClassifier, X_test, y_test) -> float:
+def tune_threshold(model: xgb.XGBClassifier, X_test, y_test) -> tuple[float, dict]:
     """
     Find the threshold that maximises F1 on the fraud class.
     Default 0.5 is rarely optimal on imbalanced data.
+    Returns (best_threshold, metrics_dict) — the dict is logged to MLflow.
     """
     print_section("5 / 6  —  Threshold tuning + evaluation")
 
@@ -187,7 +205,22 @@ def tune_threshold(model: xgb.XGBClassifier, X_test, y_test) -> float:
     plt.close()
     print(f"\n  Saved: {OUTPUT_DIR}/precision_recall_curve.png")
 
-    return best_thresh
+    metrics = {
+        "roc_auc":          float(roc),
+        "pr_auc":           float(prauc),
+        "best_threshold":   float(best_thresh),
+        "best_f1":          float(best_f1),
+        "precision":        float(precision[best_idx]),
+        "recall":           float(recall[best_idx]),
+        "true_negatives":   int(tn),
+        "false_positives":  int(fp),
+        "false_negatives":  int(fn),
+        "true_positives":   int(tp),
+        "recall_at_0.5":    float(r05["1"]["recall"]),
+        "precision_at_0.5": float(r05["1"]["precision"]),
+        "f1_at_0.5":        float(r05["1"]["f1-score"]),
+    }
+    return best_thresh, metrics
 
 
 def save_artifacts(model: xgb.XGBClassifier, threshold: float, suffix: str = ""):
@@ -205,20 +238,44 @@ def save_artifacts(model: xgb.XGBClassifier, threshold: float, suffix: str = "")
 
 
 def run_pipeline(feature_cols: list, label: str, suffix: str):
-    print(f"\n  Feature set : {label}  ({len(feature_cols)} features)")
-    X, y, _          = load_data(FEATURES_PATH, feature_cols)
-    X_train, X_test, y_train, y_test = split_data(X, y)
-    X_res, y_res     = apply_smote(X_train, y_train)
-    model            = train_model(X_res, y_res)
-    best_threshold   = tune_threshold(model, X_test, y_test)
-    save_artifacts(model, best_threshold, suffix=suffix)
-    return model, best_threshold
+    with mlflow.start_run(run_name=label):
+        # ── Log configuration ─────────────────────────────────────────────────
+        mlflow.set_tag("feature_set", label)
+        mlflow.log_param("feature_set", label)
+        mlflow.log_param("n_features", len(feature_cols))
+        mlflow.log_param("features", ", ".join(feature_cols))
+        mlflow.log_param("test_size", 0.2)
+        mlflow.log_param("resampling", "SMOTE(random_state=42)")
+        mlflow.log_params(XGB_PARAMS)
+
+        print(f"\n  Feature set : {label}  ({len(feature_cols)} features)")
+        X, y, _          = load_data(FEATURES_PATH, feature_cols)
+        X_train, X_test, y_train, y_test = split_data(X, y)
+        X_res, y_res     = apply_smote(X_train, y_train)
+        model            = train_model(X_res, y_res)
+        best_threshold, metrics = tune_threshold(model, X_test, y_test)
+
+        # ── Log results ───────────────────────────────────────────────────────
+        mlflow.log_metrics(metrics)
+        mlflow.log_artifact(str(OUTPUT_DIR / "precision_recall_curve.png"))
+        save_artifacts(model, best_threshold, suffix=suffix)
+        mlflow.xgboost.log_model(model, name="model")
+
+        print(f"\n  ✓ Logged to MLflow experiment '{EXPERIMENT_NAME}' (run: {label})")
+        return model, best_threshold
 
 
 def run():
     print("\n" + "="*55)
     print("  FraudLens — XGBoost Training Pipeline")
     print("="*55)
+
+    # ── MLflow setup — both runs land in one experiment for side-by-side compare
+    mlflow.set_tracking_uri(MLFLOW_TRACKING)
+    mlflow.set_experiment(EXPERIMENT_NAME)
+    print(f"\n  MLflow tracking : {MLFLOW_TRACKING}")
+    print(f"  Experiment      : {EXPERIMENT_NAME}")
+    print(f"  View results    : mlflow ui --backend-store-uri sqlite:///mlflow.db  → http://localhost:5000")
 
     # ── Run 1: Full features (includes leaky balance flags) ───────────────────
     print("\n\n>>> RUN 1: FULL feature set (includes PaySim balance leakage)")
@@ -231,7 +288,8 @@ def run():
     run_pipeline(FEATURE_COLS_REALISTIC, "Realistic (no leakage)", suffix="_realistic")
 
     print("\n" + "="*55)
-    print("  Both models saved. Next: Day 5 — SHAP explainability")
+    print("  Both models saved + logged to MLflow.")
+    print("  Compare the two runs side-by-side: run `mlflow ui`")
     print("  Use xgboost_fraud_realistic.json for the live API.")
     print("="*55 + "\n")
 
