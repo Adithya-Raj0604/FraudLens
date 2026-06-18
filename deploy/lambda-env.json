@@ -1,0 +1,6 @@
+{
+  "Variables": {
+    "ANTHROPIC_API_KEY_SSM_PARAM": "/fraudlens/anthropic-api-key",
+    "FRONTEND_ORIGIN": "*"
+  }
+}

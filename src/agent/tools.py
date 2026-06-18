@@ -10,7 +10,7 @@ from pathlib import Path
 # Makes `src` a reachable package root regardless of where Python is invoked from
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.api.main import build_feature_vector, flagged_features, risk_label, state, FEATURE_COLS, FEATURE_LABELS
+from src.ml import inference
 from src.rag.pipeline import build_index, load_index, query_index
 
 # ── RAG index ─────────────────────────────────────────────────────────────────
@@ -34,61 +34,37 @@ def run_fraud_model(transaction: dict) -> dict:
     Run the XGBoost fraud model on a transaction dict.
     Always the first tool the agent calls.
     """
-    from src.api.main import TransactionInput
-
-    tx         = TransactionInput(**transaction)
-    X          = build_feature_vector(tx)
-    risk_score = float(state.model.predict_proba(X)[0][1])
-    predicted  = int(risk_score >= state.threshold)
-    sv         = state.explainer.shap_values(X)[0]
-
+    result = inference.predict(transaction)
     return {
-        "risk_score":       round(risk_score, 4),
-        "predicted_class":  predicted,
-        "risk_label":       risk_label(risk_score, state.threshold),
-        "flagged_features": flagged_features(X, sv),
+        "risk_score":       result["risk_score"],
+        "predicted_class":  result["predicted_class"],
+        "risk_label":       result["risk_label"],
+        "flagged_features": result["flagged_features"],
     }
 
 
 def explain_prediction(transaction: dict) -> dict:
     """
     Run SHAP explainability on a transaction dict.
-    Agent calls this when risk_score is above threshold.
+    Agent calls this when risk_score is at or above the explain threshold.
     """
-    from src.api.main import TransactionInput
+    result = inference.explain(transaction)
 
-    tx         = TransactionInput(**transaction)
-    X          = build_feature_vector(tx)
-    risk_score = float(state.model.predict_proba(X)[0][1])
-    sv         = state.explainer.shap_values(X)[0]
-
-    # Pair each feature name with its SHAP value, sort by absolute impact
-    features = sorted(
-        [
-            {
-                "feature":    FEATURE_LABELS[col],
-                "shap_value": round(float(val), 6),
-                "direction":  "increases_fraud" if val > 0 else "decreases_fraud",
-            }
-            for col, val in zip(FEATURE_COLS, sv)
-        ],
-        key=lambda f: abs(f["shap_value"]),
-        reverse=True,
-    )
-
-    top        = features[0]
-    direction  = "increases" if top["shap_value"] > 0 else "decreases"
-    summary    = (
-        f"Primary driver: '{top['feature']}' {direction} fraud probability "
-        f"by {abs(top['shap_value']):.4f} SHAP units. "
-        f"Overall risk score: {risk_score:.4f}."
-    )
+    # Trim to the top 3 drivers and the keys the agent needs (keeps tokens low).
+    top_features = [
+        {
+            "feature":    f["label"],
+            "shap_value": f["shap_value"],
+            "direction":  f["direction"],
+        }
+        for f in result["features"][:3]
+    ]
 
     return {
-        "risk_score":   round(risk_score, 4),
-        "top_driver":   top["feature"],
-        "summary":      summary,
-        "top_features": features[:3],
+        "risk_score":   result["risk_score"],
+        "top_driver":   result["top_driver"],
+        "summary":      result["summary"],
+        "top_features": top_features,
     }
 
 
@@ -131,15 +107,8 @@ def retrieve_regulations(query: str, top_k: int = 2, max_chars: int = 500) -> st
 # ── Smoke test ────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    import xgboost as xgb
-    import shap
-    from pathlib import Path
-
-    # Manually load model so state is populated (normally FastAPI lifespan does this)
-    state.model = xgb.XGBClassifier()
-    state.model.load_model("models/xgboost_fraud_realistic.json")
-    state.explainer = shap.TreeExplainer(state.model)
-    state.threshold = float(Path("models/threshold_realistic.txt").read_text().strip())
+    # Populate model state (normally FastAPI lifespan does this).
+    inference.load_model_state()
 
     sample_tx = {
         "step": 1, "type": "TRANSFER", "amount": 9000.0,

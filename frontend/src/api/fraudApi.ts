@@ -1,6 +1,8 @@
 import type { TransactionInput, SSEEvent, ExplainResponse } from "../types"
 
-const BASE = "http://localhost:8000"
+// Dev: talk to the local uvicorn server. Production build: empty string = same
+// origin, since CloudFront serves the React app and the API on one domain (no CORS).
+const BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000"
 
 /** Pings /health to confirm the backend is up and the model is loaded. */
 export async function checkHealth(): Promise<boolean> {

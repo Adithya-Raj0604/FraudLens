@@ -1,21 +1,17 @@
 """
-Day 6 — FastAPI skeleton with /predict and /explain endpoints.
-Loads the realistic XGBoost model + SHAP explainer at startup.
-All endpoints are designed to be wrapped as LangGraph agent tools in Phase 3.
+FastAPI app — /predict, /explain, /investigate (SSE), /model-info, /health.
+
+The web layer only. All model state and ML logic live in src/ml/inference.py;
+these routes validate input, call into that domain module, and shape responses.
 """
 
 import json
 import os
 from dotenv import load_dotenv
-import numpy as np
 
 load_dotenv()
-import pandas as pd
-import shap
-import xgboost as xgb
-from pathlib import Path
 from contextlib import asynccontextmanager
-from typing import Optional, AsyncGenerator
+from typing import AsyncGenerator
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,46 +19,10 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-# ── Paths ─────────────────────────────────────────────────────────────────────
-
-MODEL_PATH     = Path("models/xgboost_fraud_realistic.json")
-THRESHOLD_PATH = Path("models/threshold_realistic.txt")
-
-FEATURE_COLS = [
-    "step", "type_encoded", "amount", "log_amount",
-    "oldbalanceOrg", "newbalanceOrig", "oldbalanceDest", "newbalanceDest",
-    "velocity_cumcount", "velocity_1hr", "velocity_3hr", "velocity_24hr",
-]
-
-FEATURE_LABELS = {
-    "step":              "Hour of transaction",
-    "type_encoded":      "Transaction type",
-    "amount":            "Amount ($)",
-    "log_amount":        "Log amount",
-    "oldbalanceOrg":     "Origin balance (before)",
-    "newbalanceOrig":    "Origin balance (after)",
-    "oldbalanceDest":    "Dest balance (before)",
-    "newbalanceDest":    "Dest balance (after)",
-    "velocity_cumcount": "Cumulative txn count",
-    "velocity_1hr":      "Txns same hour",
-    "velocity_3hr":      "Txns same 3hr window",
-    "velocity_24hr":     "Txns same day",
-}
-
-TYPE_MAP = {"TRANSFER": 1, "CASH_OUT": 2}
-
-# ── Global model state (loaded once at startup) ───────────────────────────────
-
-class ModelState:
-    model:      xgb.XGBClassifier = None
-    explainer:  shap.TreeExplainer = None
-    threshold:  float = 0.5
-
-
-state = ModelState()
+from src.ml import inference
+from src.ml.inference import FEATURE_COLS, FEATURE_LABELS, state
 
 
 def load_anthropic_key_from_ssm() -> None:
@@ -93,15 +53,8 @@ async def lifespan(app: FastAPI):
     """Load model + SHAP explainer once at startup."""
     load_anthropic_key_from_ssm()
 
-    print("Loading XGBoost model...")
-    state.model = xgb.XGBClassifier()
-    state.model.load_model(str(MODEL_PATH))
-
-    print("Building SHAP TreeExplainer...")
-    state.explainer = shap.TreeExplainer(state.model)
-
-    print(f"Loading threshold...")
-    state.threshold = float(THRESHOLD_PATH.read_text().strip())
+    print("Loading model + SHAP explainer...")
+    inference.load_model_state()
 
     print(f"Ready — threshold={state.threshold:.4f}")
     yield
@@ -188,42 +141,6 @@ class ExplainResponse(BaseModel):
     summary:        str
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-def build_feature_vector(tx: TransactionInput) -> np.ndarray:
-    """Convert TransactionInput into the model's feature vector."""
-    if tx.type not in TYPE_MAP:
-        raise HTTPException(status_code=422, detail=f"type must be TRANSFER or CASH_OUT, got '{tx.type}'")
-
-    type_encoded = TYPE_MAP[tx.type]
-    log_amount   = float(np.log1p(tx.amount))
-
-    values = [
-        tx.step, type_encoded, tx.amount, log_amount,
-        tx.oldbalanceOrg, tx.newbalanceOrig,
-        tx.oldbalanceDest, tx.newbalanceDest,
-        tx.velocity_cumcount, tx.velocity_1hr,
-        tx.velocity_3hr, tx.velocity_24hr,
-    ]
-    return np.array(values, dtype="float32").reshape(1, -1)
-
-
-def risk_label(score: float, threshold: float) -> str:
-    if score >= threshold:
-        return "HIGH"
-    elif score >= threshold * 0.6:
-        return "MEDIUM"
-    return "LOW"
-
-
-def flagged_features(X: np.ndarray, shap_vals: np.ndarray, top_n: int = 3) -> list[str]:
-    """Return top N feature names driving fraud risk upward."""
-    positive_shap = [(FEATURE_LABELS[FEATURE_COLS[i]], shap_vals[i])
-                     for i in range(len(FEATURE_COLS)) if shap_vals[i] > 0]
-    positive_shap.sort(key=lambda x: x[1], reverse=True)
-    return [name for name, _ in positive_shap[:top_n]]
-
-
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @app.get("/health")
@@ -243,20 +160,17 @@ def predict(request: Request, tx: TransactionInput):
     Agent tool: run_fraud_model(transaction) — always called first.
     Returns risk score 0–1 and predicted class.
     """
-    X = build_feature_vector(tx)
-
-    risk_score = float(state.model.predict_proba(X)[0][1])
-    predicted  = int(risk_score >= state.threshold)
-
-    # Compute SHAP for flagged features (lightweight — single row)
-    sv = state.explainer.shap_values(X)[0]
+    try:
+        result = inference.predict(tx.model_dump())
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
     return PredictResponse(
-        risk_score=round(risk_score, 4),
-        predicted_class=predicted,
-        risk_label=risk_label(risk_score, state.threshold),
-        threshold_used=state.threshold,
-        flagged_features=flagged_features(X, sv),
+        risk_score=result["risk_score"],
+        predicted_class=result["predicted_class"],
+        risk_label=result["risk_label"],
+        threshold_used=result["threshold"],
+        flagged_features=result["flagged_features"],
     )
 
 
@@ -265,44 +179,20 @@ def predict(request: Request, tx: TransactionInput):
 def explain(request: Request, tx: TransactionInput):
     """
     SHAP attribution for a single transaction.
-    Agent tool: explain_prediction(transaction) — called when risk_score > 0.5.
+    Agent tool: explain_prediction(transaction) — called when risk_score >= 0.4.
     Returns per-feature SHAP values with directional impact.
     """
-    X = build_feature_vector(tx)
-
-    risk_score = float(state.model.predict_proba(X)[0][1])
-    sv         = state.explainer.shap_values(X)[0]
-    base_value = float(state.explainer.expected_value)
-
-    features = []
-    for i, col in enumerate(FEATURE_COLS):
-        features.append(SHAPFeature(
-            feature=col,
-            label=FEATURE_LABELS[col],
-            shap_value=round(float(sv[i]), 6),
-            raw_value=round(float(X[0][i]), 4),
-            direction="increases_fraud" if sv[i] > 0 else "decreases_fraud",
-        ))
-
-    # Sort by absolute SHAP impact
-    features.sort(key=lambda f: abs(f.shap_value), reverse=True)
-
-    top_driver = features[0].label
-    top_shap   = features[0].shap_value
-    direction  = "increases" if top_shap > 0 else "decreases"
-
-    summary = (
-        f"Primary driver: '{top_driver}' {direction} fraud probability "
-        f"by {abs(top_shap):.4f} SHAP units. "
-        f"Overall risk score: {risk_score:.4f}."
-    )
+    try:
+        result = inference.explain(tx.model_dump())
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
     return ExplainResponse(
-        risk_score=round(risk_score, 4),
-        base_value=round(base_value, 6),
-        features=features,
-        top_driver=top_driver,
-        summary=summary,
+        risk_score=result["risk_score"],
+        base_value=result["base_value"],
+        features=[SHAPFeature(**f) for f in result["features"]],
+        top_driver=result["top_driver"],
+        summary=result["summary"],
     )
 
 
