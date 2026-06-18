@@ -61,7 +61,7 @@ export const PRESETS: Preset[] = [
     id: "mule",
     label: "Mule Cash-Out",
     description:
-      "Large CASH_OUT draining the account into a pass-through mule account with very high transaction velocity. Layering behaviour — expect HIGH risk.",
+      "Large $64k CASH_OUT fully depleting the account, with very high velocity (14 txns/24hr). The realistic model still scores this LOW (~0.34) — without the balance-leakage features it doesn't treat depletion as fraud — so the agent recommends MONITOR, driven by the velocity flag rather than the ML score.",
     severity: "fraud",
     tx: {
       step: 50,
@@ -81,7 +81,7 @@ export const PRESETS: Preset[] = [
     id: "structuring",
     label: "Structuring",
     description:
-      "Amount deliberately set just under the $10,000 CAD reporting threshold, repeated several times in a day (smurfing). Partial drain but suspicious amount and velocity — typically MEDIUM risk.",
+      "Amount set just under the $10,000 CAD reporting threshold (smurfing), with elevated velocity (6 txns/24hr). The model scores it LOW (~0.0) since the balance progression looks normal — the agent recommends MONITOR on the velocity flag, a regulatory signal the ML model alone misses.",
     severity: "suspicious",
     tx: {
       step: 300,
