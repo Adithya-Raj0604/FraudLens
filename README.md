@@ -1,7 +1,7 @@
 # FraudLens
 ### Agentic Fraud Investigation System
 
-> **Live demo:** `[CloudFront URL — added after Phase 4 deployment]`
+> **Live demo:** **https://d30g6wz74gv38k.cloudfront.net/** — fully serverless on AWS (CloudFront + S3 frontend, Lambda streaming API), ~$0 idle.
 
 A LangGraph-orchestrated fraud investigation agent built on the PaySim dataset (6.3M transactions). The agent autonomously selects and sequences tools — fraud scoring, SHAP explanation, account velocity analysis, and regulatory retrieval — based on transaction risk context.
 
@@ -35,11 +35,13 @@ LangGraph Agent ──► run_fraud_model()        (Claude Haiku 4.5
                 ──► check_account_velocity()
                     │
                     ▼
-              FastAPI + SSE streaming   (Docker → AWS Lambda — planned)
+              FastAPI + SSE streaming   (Docker → AWS Lambda, deployed)
                     │
                     ▼
-              React Frontend            (CloudFront + S3 — planned)
+              React Frontend            (CloudFront + S3, deployed)
 ```
+
+See [Live Deployment](#live-deployment-serverless-on-aws) for the running serverless architecture.
 
 ---
 
@@ -195,6 +197,38 @@ Two findings this table makes obvious:
 
 ---
 
+## Live Deployment (Serverless on AWS)
+
+**Live:** **https://d30g6wz74gv38k.cloudfront.net/**
+
+```
+Browser  ──HTTPS (public)──►  CloudFront
+                                 ├─ /              → S3 bucket (React app, private via OAC)
+                                 └─ /investigate, /predict, /explain, /health, /model-info
+                                                   → Lambda Function URL (RESPONSE_STREAM)
+                                                       └ FastAPI + Lambda Web Adapter
+                                                          └ XGBoost · SHAP · FAISS RAG · Claude agent
+Secret: Anthropic API key in SSM Parameter Store (SecureString, KMS), fetched at startup
+```
+
+Fully serverless, **~$0 when idle** (pay-per-request), one public domain, SSE streaming preserved end-to-end.
+
+**Key engineering decisions**
+
+- **Lambda Function URL + Lambda Web Adapter — not API Gateway.** API Gateway buffers the full Lambda response, which would collapse the `/investigate` live tool-trace into a single dump. A Function URL in `RESPONSE_STREAM` mode is the only way to stream SSE from Lambda; the Web Adapter runs the unmodified FastAPI/uvicorn app as-is.
+- **CloudFront fronts both origins.** The frontend and API share one domain, so browser→API calls are same-origin (no CORS), and the function is reached through the CDN rather than directly.
+- **Secrets never enter the image.** `.env` is gitignored and excluded from the Docker build; the Anthropic key lives in SSM Parameter Store (SecureString) and is fetched at container startup.
+- **Cold-start hardening.** An EventBridge rule pings `/health` every 5 min to keep a container warm; CloudFront's origin read timeout is raised to 60s so a rare cold start completes instead of 504'ing.
+
+**Two non-obvious bugs solved during deployment** (kept here because they cost real debugging time):
+
+1. **Post-Oct-2025 Function URLs require *both* `lambda:InvokeFunctionUrl` and `lambda:InvokeFunction`** in the resource-based policy — granting only the first returns a 403 that masquerades as an account-level block.
+2. **CloudFront Origin Access Control can't sign POST request bodies** (`InvalidSignatureException` on POST, GET fine) — resolved by setting the Lambda OAC to non-signing and using a public (`NONE`) Function URL behind the distribution.
+
+**Deploy:** `deploy/deploy.ps1` (build → ECR → Lambda + Function URL) then `deploy/cloudfront.ps1` (S3 + OAC + CloudFront + frontend build/upload). Both idempotent; account ID auto-resolved from credentials. See [`deploy/README.md`](deploy/README.md).
+
+---
+
 ## Technology Stack
 
 | Layer | Technology |
@@ -208,10 +242,11 @@ Two findings this table makes obvious:
 | RAG | FAISS 1.14.2, sentence-transformers 5.5.1 |
 | API | FastAPI 0.136.3, Pydantic 2.13.4, Uvicorn, SSE |
 | Frontend | React 18, Vite, Tailwind CSS, Recharts, Axios |
-| Cloud — Backend | AWS Lambda (Docker), API Gateway, ECR, S3 |
-| Cloud — CDN | CloudFront |
-| Monitoring | CloudWatch EventBridge (warm ping), DynamoDB (drift logs) |
-| DevOps | GitHub Actions, Docker, pytest |
+| Cloud — Backend | AWS Lambda (container image) + Lambda Web Adapter, Function URL (RESPONSE_STREAM), ECR |
+| Cloud — Frontend/CDN | CloudFront + S3 (private origin via OAC) |
+| Secrets | SSM Parameter Store (SecureString) |
+| Reliability | EventBridge warm-ping (cold-start mitigation) |
+| DevOps | Docker, pytest |
 
 ---
 
@@ -231,14 +266,20 @@ XGBoost produces exact SHAP attributions via `TreeExplainer`. Neural network SHA
 FAISS runs locally with zero cost and zero latency overhead for ~50 compliance documents. For production at millions of documents, multi-user access, and SLA requirements, Pinecone or Weaviate is appropriate. This is an explicit scope decision documented here rather than a technical limitation.
 
 ### Why a hosted LLM API (Claude) over self-hosting a model in Lambda?
-Self-hosting (e.g. Ollama or a HuggingFace model in-container) requires loading 4–7GB of weights into the Lambda container, producing a 10GB+ Docker image and 60–90s cold starts. A hosted inference API offloads the model entirely, keeps the Docker image under 3GB, and eliminates cold-start latency.
+Self-hosting (e.g. Ollama or a HuggingFace model in-container) requires loading 4–7GB of weights into the Lambda container, producing a 10GB+ Docker image and 60–90s cold starts. A hosted inference API offloads the LLM entirely; the container (~4.4GB — CPU-only PyTorch + the MiniLM embedder for RAG) stays well under Lambda's 10GB image limit and avoids LLM cold-start latency.
 
 **Why Claude Haiku 4.5 specifically?** The agent depends on reliable tool-calling and structured output — Claude's tool-use is well-suited to the LangGraph ReAct loop and produces clean, citation-grounded investigator reports. Haiku is the cheapest, fastest model in the family, which keeps per-investigation cost low. *(Note: the original project scope specced HuggingFace Mistral-7B; it was switched to Claude during build for materially more reliable tool-calling and report quality — a deliberate change, not a default.)*
 
 **Cost control.** Because the LLM is metered per token, the agent was optimized to minimize tokens: a terse system prompt and tool schemas, truncated RAG retrieval payloads, and `max_tokens` bounding the report. This brought cost from ~2¢ to ~0.5¢ per investigation.
 
+### Why a Lambda Function URL over API Gateway?
+API Gateway buffers the entire Lambda response before returning it, which would break the `/investigate` SSE live-trace (the agent's tool steps would arrive as one batch instead of streaming). A Lambda **Function URL in `RESPONSE_STREAM` mode** is the only managed way to stream responses from Lambda, and the **Lambda Web Adapter** lets the existing FastAPI/uvicorn app run unchanged in the container. The original scope assumed API Gateway; it was switched to a Function URL specifically to preserve streaming.
+
+### Why CloudFront in front of a Function URL?
+Browsers can't SigV4-sign requests, so the API can't be IAM-authed directly from the page. CloudFront serves the React app and proxies the API on **one domain** (same-origin, no CORS) while the Function URL stays the single API origin. (OAC signing is disabled on the Lambda origin because OAC cannot sign POST bodies — see [Live Deployment](#live-deployment-serverless-on-aws).)
+
 ### Why EventBridge warm ping over provisioned Lambda concurrency?
-Provisioned concurrency costs $40–100/month. An EventBridge rule pinging every 10 minutes costs ~$0.00/month (4,320 pings vs 14M free events/month) and achieves the same demo reliability. Provisioned concurrency is appropriate at production traffic volumes; EventBridge is appropriate for a portfolio demo.
+Provisioned concurrency costs $40–100/month. An EventBridge rule pinging `/health` every 5 minutes costs ~$0.00/month (well within the free tier) and keeps a container warm so demo visitors avoid cold-start latency. Provisioned concurrency is appropriate at production traffic volumes; EventBridge is appropriate for a portfolio demo.
 
 ### Why SSE over WebSockets for agent trace streaming?
 SSE is one-directional (server → client), which is exactly what agent step streaming requires. WebSockets add bidirectional connection management overhead that provides no benefit for this use case. SSE is simpler to implement, simpler to debug, and natively supported by FastAPI's `StreamingResponse`.
@@ -251,14 +292,12 @@ SSE is one-directional (server → client), which is exactly what agent step str
 
 | Service | Cost | Notes |
 |---|---|---|
-| AWS Lambda | ~$0.02 | 500 req/mo × 512MB × 3s |
-| API Gateway | ~$0.01 | $3.50/1M HTTP calls |
-| ECR | ~$0.25 | ~2.5GB Docker image |
-| CloudFront | ~$0.01 | React bundle, 1000 loads/mo |
-| S3 | ~$0.00 | ~50MB total |
-| DynamoDB | ~$0.00 | KB-scale drift logs |
-| EventBridge | ~$0.00 | 4,320 pings/mo |
-| **Subtotal** | **~$0.29/mo** | |
+| AWS Lambda | ~$0.02 | pay-per-request, 3008MB; ~$0 idle |
+| ECR | ~$0.44 | ~4.4GB container image |
+| CloudFront + S3 | ~$0.01 | React bundle + API proxy, low traffic |
+| SSM Parameter Store | ~$0.00 | 1 SecureString (standard tier, free) |
+| EventBridge | ~$0.00 | warm-ping every 5 min (free tier) |
+| **Subtotal** | **~$0.47/mo** | dominated by ECR image storage |
 
 **LLM inference (Anthropic Claude Haiku 4.5, metered per token):**
 
@@ -309,13 +348,15 @@ pytest tests/ -v
 - [x] Phase 1 — ML Core (Dask + XGBoost + SHAP + FastAPI)
 - [x] Phase 2 — LangGraph learning track (toy agent)
 - [x] Phase 3 — Agentic layer + RAG (FAISS over 25 OSFI/FINTRAC docs) + SSE streaming
-- [~] Phase 4 — React frontend + AWS deployment + MLOps hardening
+- [x] Phase 4 — React frontend + AWS deployment
   - [x] React + TypeScript + Tailwind + Recharts frontend (form, live SSE trace, SHAP chart, investigator report, API health indicator)
-  - [ ] Docker + AWS Lambda / API Gateway deployment
-  - [ ] CloudFront + S3 hosting for the frontend
-  - [ ] `/monitor` endpoint + DynamoDB drift logging
+  - [x] Docker + AWS Lambda (container image, Function URL streaming via Lambda Web Adapter)
+  - [x] CloudFront + S3 hosting for the frontend (single domain, OAC, secrets in SSM)
+  - [x] Cold-start hardening (EventBridge warm-ping + 60s CloudFront origin timeout)
+- [ ] Phase 5 — MLOps hardening (planned)
+  - [ ] `/monitor` drift endpoint + logging
   - [ ] GitHub Actions CI/CD
-  - [ ] Architecture diagram tab (static SVG)
+  - [ ] Warm-ping scripted into the deploy (currently set up live, not yet in `deploy.ps1`)
 
 ---
 

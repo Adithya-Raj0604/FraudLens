@@ -41,7 +41,7 @@ export const PRESETS: Preset[] = [
     id: "drain",
     label: "Account Drain",
     description:
-      "Classic account-takeover pattern: the origin balance is emptied to exactly $0 into a previously empty destination account. Strongest fraud signal — expect HIGH risk and an ESCALATE recommendation.",
+      "Origin balance emptied to $0 into a previously empty account, with elevated velocity (8 txns/24hr). The realistic model excludes the balance-to-zero leakage features, so it scores this ~MEDIUM (amount-driven) rather than HIGH — yet the agent still ESCALATES on the velocity flag + full depletion. A live example of why the leakage fix matters.",
     severity: "fraud",
     tx: {
       step: 1,
