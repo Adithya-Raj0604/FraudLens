@@ -220,7 +220,7 @@ Fully serverless, **~$0 when idle** (pay-per-request), one public domain, SSE st
 - **Secrets never enter the image.** `.env` is gitignored and excluded from the Docker build; the Anthropic key lives in SSM Parameter Store (SecureString) and is fetched at container startup.
 - **Cold-start hardening.** An EventBridge rule pings `/health` every 5 min to keep a container warm; CloudFront's origin read timeout is raised to 60s so a rare cold start completes instead of 504'ing.
 
-**Two non-obvious bugs solved during deployment** (kept here because they cost real debugging time):
+**Two non-obvious bugs solved during deployment**:
 
 1. **Post-Oct-2025 Function URLs require *both* `lambda:InvokeFunctionUrl` and `lambda:InvokeFunction`** in the resource-based policy — granting only the first returns a 403 that masquerades as an account-level block.
 2. **CloudFront Origin Access Control can't sign POST request bodies** (`InvalidSignatureException` on POST, GET fine) — resolved by setting the Lambda OAC to non-signing and using a public (`NONE`) Function URL behind the distribution.
