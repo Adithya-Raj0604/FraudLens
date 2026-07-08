@@ -5,7 +5,7 @@ models/threshold_realistic.txt
 models/xgboost_fraud.json
 models/xgboost_fraud_realistic.json
 .env
-.claude
+.claude/
 # MLflow local tracking store
 mlruns/
 mlartifacts/
