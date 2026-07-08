@@ -8,7 +8,7 @@ interface Props {
 
 export default function InvestigatorReport({ content }: Props) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-6 space-y-4">
+    <div data-testid="investigation-report" className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-6 space-y-4">
       <h2 className="font-mono text-base font-semibold text-slate-100 tracking-tight flex items-center gap-2">
         <FileText size={16} className="text-accent" />
         Investigation Report

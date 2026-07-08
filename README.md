@@ -311,6 +311,45 @@ SSE is one-directional (server → client), which is exactly what agent step str
 
 ---
 
+## Testing
+
+Two suites, both under `tests/`:
+
+| Suite | What it covers | Run |
+|---|---|---|
+| `tests/test_api.py`, `tests/test_api_contract.py` | Business-logic assertions (score ranges, labels, 422s) + JSON-schema validation and response-time budgets for `/health`, `/predict`, `/explain`, `/model-info` | `pytest tests/test_api.py tests/test_api_contract.py -v` |
+| `tests/e2e/` | Selenium UI tests against the React dashboard, built as a **Page Object Model** (`tests/e2e/pages/dashboard_page.py`) | `pytest tests/e2e -v` |
+
+### UI test plan (8 cases, Page Object Model)
+
+| Test | Type | Asserts |
+|---|---|---|
+| `test_dashboard_loads_with_header_and_default_preset` | Happy path | Header renders, form starts on the first preset |
+| `test_preset_selection_populates_form_fields` | Happy path | Clicking a preset fills every form field with that preset's values |
+| `test_api_status_shows_connected_when_backend_reachable` | Happy path | Health indicator turns "online" when the backend is up |
+| `test_submit_investigation_reaches_terminal_state` | Happy path | Submitting shows the live feed and reaches a terminal state (report or graceful error), re-enabling Submit |
+| `test_full_investigation_renders_report_and_shap_chart` | Happy path (gated) | With `ANTHROPIC_API_KEY` set, a full investigation renders a report + SHAP chart — skipped otherwise |
+| `test_manual_edit_clears_active_preset_highlight` | Edge case | Editing a field by hand deselects the active preset |
+| `test_amount_field_clamps_to_minimum` | Edge case | Decrementing below the field's min clamps instead of going negative |
+| `test_api_status_shows_offline_when_backend_unreachable` | Edge case | `/health` blocked via CDP network interception → indicator shows "offline", not stuck "checking" |
+
+Run locally: start the backend (`uvicorn src.api.main:app --reload`) and frontend (`npm run dev` in `frontend/`), then:
+
+```bash
+pip install -r requirements.txt
+UI_BASE_URL=http://localhost:5173 pytest tests/e2e -v      # HEADLESS=false to watch it run
+```
+
+### CI-only model fixture
+
+`models/*.json` and `Dataset/features.parquet` are gitignored (the real model is trained on the 470MB PaySim CSV). `scripts/generate_ci_model.py` fits a small XGBoost model on synthetic data that reproduces the same balance-depletion fraud signature, so `/predict` and `/explain` behave sensibly in CI without the full dataset. Local dev keeps using the real trained model in `models/`.
+
+### GitHub Actions
+
+[`.github/workflows/tests.yml`](.github/workflows/tests.yml) runs on every push/PR to `main`: an `api-tests` job (pytest against the synthetic model fixture) followed by a `ui-tests` job (builds the frontend, starts both servers, runs the Selenium suite headless in Chrome). The live-agent test self-skips unless an `ANTHROPIC_API_KEY` repo secret is configured.
+
+---
+
 ## Local Setup
 
 ```bash
@@ -353,9 +392,9 @@ pytest tests/ -v
   - [x] Docker + AWS Lambda (container image, Function URL streaming via Lambda Web Adapter)
   - [x] CloudFront + S3 hosting for the frontend (single domain, OAC, secrets in SSM)
   - [x] Cold-start hardening (EventBridge warm-ping + 60s CloudFront origin timeout)
-- [ ] Phase 5 — MLOps hardening (planned)
+- [ ] Phase 5 — MLOps hardening (in progress)
   - [ ] `/monitor` drift endpoint + logging
-  - [ ] GitHub Actions CI/CD
+  - [x] GitHub Actions CI — Selenium (POM) UI tests + API schema/latency tests on every push (see [Testing](#testing))
   - [ ] Warm-ping scripted into the deploy (currently set up live, not yet in `deploy.ps1`)
 
 ---

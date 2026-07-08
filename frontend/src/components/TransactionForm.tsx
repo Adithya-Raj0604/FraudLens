@@ -34,6 +34,7 @@ export default function TransactionForm({ onSubmit, disabled }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
+      data-testid="transaction-form"
       className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-5 space-y-3.5"
     >
       <h2 className="font-mono text-base font-semibold text-slate-100 tracking-tight">
@@ -51,6 +52,7 @@ export default function TransactionForm({ onSubmit, disabled }: Props) {
                 key={p.id}
                 type="button"
                 onClick={() => applyPreset(p)}
+                data-testid={`preset-${p.id}`}
                 className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium cursor-pointer transition-colors duration-150 ${
                   active
                     ? "border-white/30 bg-white/10 text-slate-100"
@@ -82,6 +84,7 @@ export default function TransactionForm({ onSubmit, disabled }: Props) {
           <select
             value={form.type}
             onChange={e => set("type", e.target.value as "TRANSFER" | "CASH_OUT")}
+            data-testid="field-type"
             className="w-full bg-surface-2 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-slate-100 cursor-pointer focus:outline-none focus:border-accent/60 transition-colors duration-150"
           >
             <option value="TRANSFER">TRANSFER</option>
@@ -94,6 +97,7 @@ export default function TransactionForm({ onSubmit, disabled }: Props) {
           onChange={v => set("step", v)}
           min={1}
           max={743}
+          testId="field-step"
         />
       </div>
 
@@ -104,6 +108,7 @@ export default function TransactionForm({ onSubmit, disabled }: Props) {
         onChange={v => set("amount", v)}
         min={0}
         step={100}
+        testId="field-amount"
       />
 
       {/* Origin balances */}
@@ -116,6 +121,7 @@ export default function TransactionForm({ onSubmit, disabled }: Props) {
             onChange={v => set("oldbalanceOrg", v)}
             min={0}
             step={100}
+            testId="field-oldbalanceOrg"
           />
           <NumberField
             label="Balance after"
@@ -123,6 +129,7 @@ export default function TransactionForm({ onSubmit, disabled }: Props) {
             onChange={v => set("newbalanceOrig", v)}
             min={0}
             step={100}
+            testId="field-newbalanceOrig"
           />
         </div>
       </div>
@@ -137,6 +144,7 @@ export default function TransactionForm({ onSubmit, disabled }: Props) {
             onChange={v => set("oldbalanceDest", v)}
             min={0}
             step={100}
+            testId="field-oldbalanceDest"
           />
           <NumberField
             label="Balance after"
@@ -144,6 +152,7 @@ export default function TransactionForm({ onSubmit, disabled }: Props) {
             onChange={v => set("newbalanceDest", v)}
             min={0}
             step={100}
+            testId="field-newbalanceDest"
           />
         </div>
       </div>
@@ -157,24 +166,28 @@ export default function TransactionForm({ onSubmit, disabled }: Props) {
             value={form.velocity_cumcount}
             onChange={v => set("velocity_cumcount", v)}
             min={0}
+            testId="field-velocity-cumcount"
           />
           <NumberField
             label="Same hour"
             value={form.velocity_1hr}
             onChange={v => set("velocity_1hr", v)}
             min={0}
+            testId="field-velocity-1hr"
           />
           <NumberField
             label="Same 3hr window"
             value={form.velocity_3hr}
             onChange={v => set("velocity_3hr", v)}
             min={0}
+            testId="field-velocity-3hr"
           />
           <NumberField
             label="Same day"
             value={form.velocity_24hr}
             onChange={v => set("velocity_24hr", v)}
             min={0}
+            testId="field-velocity-24hr"
           />
         </div>
       </div>
@@ -182,6 +195,7 @@ export default function TransactionForm({ onSubmit, disabled }: Props) {
       <button
         type="submit"
         disabled={disabled}
+        data-testid="submit-investigate"
         className="w-full flex items-center justify-center gap-2 bg-accent text-sm font-semibold text-slate-900 py-2 rounded-xl cursor-pointer hover:bg-green-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent/60"
       >
         <Search size={16} />

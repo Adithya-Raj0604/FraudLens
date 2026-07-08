@@ -44,3 +44,7 @@ boto3==1.43.31
 # Dev
 pytest==9.0.3
 python-dotenv==1.2.2
+
+# Testing — Selenium UI suite (Page Object Model) + API schema validation
+selenium==4.45.0
+jsonschema==4.26.0

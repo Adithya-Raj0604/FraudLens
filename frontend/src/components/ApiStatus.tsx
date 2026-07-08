@@ -30,6 +30,8 @@ export default function ApiStatus() {
 
   return (
     <div
+      data-testid="api-status"
+      data-status={state}
       className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md px-3 py-1.5"
       title={
         state === "offline"

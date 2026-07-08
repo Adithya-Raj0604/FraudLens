@@ -26,7 +26,7 @@ export default function ShapChart({ features }: Props) {
   }))
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-6 space-y-4">
+    <div data-testid="shap-chart" className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-6 space-y-4">
       <div className="space-y-0.5">
         <h2 className="font-mono text-base font-semibold text-slate-100 tracking-tight">
           SHAP Feature Attribution
