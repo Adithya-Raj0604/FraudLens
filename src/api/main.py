@@ -17,6 +17,10 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+
+# slowapi must stay pinned in requirements.txt — a missing/mismatched pin here
+# crashes uvicorn on import and fails the CI "Start backend" step silently
+# (wait-on just times out waiting for /health).
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
