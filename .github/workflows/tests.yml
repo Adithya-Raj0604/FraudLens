@@ -100,6 +100,12 @@ jobs:
       AWS_REGION: us-east-1
       ECR_REPOSITORY: fraudlens-api
       LAMBDA_FUNCTION: fraudlens-api
+      # Lambda CPU scales with memory (~1 vCPU per 1769 MB). 5120 MB gives ~3 vCPUs
+      # to shorten cold-start imports + SHAP-explainer build and give /investigate
+      # (torch + sentence-transformers + faiss) headroom. Plain Lambda stays
+      # pay-per-invocation — no idle charge. Keep in sync with deploy/deploy.ps1.
+      LAMBDA_MEMORY: 5120
+      LAMBDA_TIMEOUT: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -155,4 +161,15 @@ jobs:
             --region "$AWS_REGION" >/dev/null
           aws lambda wait function-updated \
             --function-name "$LAMBDA_FUNCTION" --region "$AWS_REGION"
-          echo "Deployed $IMAGE_SHA to Lambda $LAMBDA_FUNCTION"
+
+          # Reconcile memory/timeout. update-function-code alone never changes
+          # memory, so without this the function stays at its old size. The two
+          # update calls can't overlap — hence the wait above and below.
+          aws lambda update-function-configuration \
+            --function-name "$LAMBDA_FUNCTION" \
+            --memory-size "$LAMBDA_MEMORY" \
+            --timeout "$LAMBDA_TIMEOUT" \
+            --region "$AWS_REGION" >/dev/null
+          aws lambda wait function-updated \
+            --function-name "$LAMBDA_FUNCTION" --region "$AWS_REGION"
+          echo "Deployed $IMAGE_SHA to Lambda $LAMBDA_FUNCTION (${LAMBDA_MEMORY}MB)"
