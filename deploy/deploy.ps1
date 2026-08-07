@@ -23,6 +23,13 @@ $ROLE    = "fraudlens-lambda-role"
 $ECR     = "$ACCOUNT.dkr.ecr.$REGION.amazonaws.com"
 $IMAGE   = "$ECR/${REPO}:latest"
 
+# Lambda CPU scales with memory (~1 vCPU per 1769 MB). 5120 MB gives ~3 vCPUs,
+# which shortens cold-start imports + SHAP-explainer build and gives /investigate
+# (torch + sentence-transformers + faiss) comfortable headroom. Plain Lambda is
+# still pay-per-invocation — no idle charge — so this only costs more per call.
+$MEMORY  = 5120
+$TIMEOUT = 120
+
 function Assert-LastExit($what) {
     if ($LASTEXITCODE -ne 0) { throw "FAILED: $what (exit $LASTEXITCODE)" }
 }
@@ -73,10 +80,22 @@ aws lambda get-function --function-name $FUNC --region $REGION 2>$null | Out-Nul
 if ($LASTEXITCODE -eq 0) {
     aws lambda update-function-code --function-name $FUNC --image-uri $IMAGE --region $REGION | Out-Null
     Assert-LastExit "lambda update-function-code"
+
+    # update-function-code and update-function-configuration can't overlap, so wait
+    # for the code update to settle, then reconcile memory/timeout. (update-function-code
+    # alone never changes memory — without this, an existing function stays at its old
+    # memory size no matter what $MEMORY says.)
+    aws lambda wait function-updated --function-name $FUNC --region $REGION
+    Assert-LastExit "lambda wait function-updated (post-code)"
+    aws lambda update-function-configuration --function-name $FUNC `
+        --memory-size $MEMORY --timeout $TIMEOUT --region $REGION | Out-Null
+    Assert-LastExit "lambda update-function-configuration"
+    aws lambda wait function-updated --function-name $FUNC --region $REGION
+    Assert-LastExit "lambda wait function-updated (post-config)"
 } else {
     aws lambda create-function --function-name $FUNC --package-type Image `
         --code ImageUri=$IMAGE --role $roleArn `
-        --memory-size 3008 --timeout 120 `
+        --memory-size $MEMORY --timeout $TIMEOUT `
         --environment file://deploy/lambda-env.json `
         --region $REGION | Out-Null
     Assert-LastExit "lambda create-function"
