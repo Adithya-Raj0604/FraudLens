@@ -100,11 +100,13 @@ jobs:
       AWS_REGION: us-east-1
       ECR_REPOSITORY: fraudlens-api
       LAMBDA_FUNCTION: fraudlens-api
-      # Lambda CPU scales with memory (~1 vCPU per 1769 MB). 5120 MB gives ~3 vCPUs
-      # to shorten cold-start imports + SHAP-explainer build and give /investigate
-      # (torch + sentence-transformers + faiss) headroom. Plain Lambda stays
-      # pay-per-invocation — no idle charge. Keep in sync with deploy/deploy.ps1.
-      LAMBDA_MEMORY: 5120
+      # Lambda CPU scales with memory (~1 vCPU per 1769 MB), so more memory =
+      # shorter cold starts. NOTE: this account is capped at 3008 MB max function
+      # memory (legacy account-level limit; needs an AWS Support case to raise —
+      # NOT in self-serve Service Quotas). Bump this to 5120 once that cap is
+      # lifted. Plain Lambda stays pay-per-invocation — no idle charge. Keep in
+      # sync with deploy/deploy.ps1.
+      LAMBDA_MEMORY: 3008
       LAMBDA_TIMEOUT: 120
     steps:
       - uses: actions/checkout@v4

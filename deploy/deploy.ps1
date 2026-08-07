@@ -23,11 +23,12 @@ $ROLE    = "fraudlens-lambda-role"
 $ECR     = "$ACCOUNT.dkr.ecr.$REGION.amazonaws.com"
 $IMAGE   = "$ECR/${REPO}:latest"
 
-# Lambda CPU scales with memory (~1 vCPU per 1769 MB). 5120 MB gives ~3 vCPUs,
-# which shortens cold-start imports + SHAP-explainer build and gives /investigate
-# (torch + sentence-transformers + faiss) comfortable headroom. Plain Lambda is
-# still pay-per-invocation — no idle charge — so this only costs more per call.
-$MEMORY  = 5120
+# Lambda CPU scales with memory (~1 vCPU per 1769 MB), so more memory = shorter
+# cold starts. NOTE: this account is capped at 3008 MB max function memory (legacy
+# account-level limit; needs an AWS Support case to raise — NOT in self-serve
+# Service Quotas). Bump to 5120 once that cap is lifted. Plain Lambda is still
+# pay-per-invocation — no idle charge — so raising it only costs more per call.
+$MEMORY  = 3008
 $TIMEOUT = 120
 
 function Assert-LastExit($what) {
