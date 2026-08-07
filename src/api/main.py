@@ -153,6 +153,9 @@ def health():
         "status": "ok",
         "model_loaded": state.model is not None,
         "threshold": state.threshold,
+        # Set to the deploying commit SHA in CI so /health confirms which build
+        # is live; defaults to "dev" for local runs.
+        "version": os.getenv("APP_VERSION", "dev"),
     }
 
 
