@@ -115,6 +115,11 @@ jobs:
       # sync with deploy/deploy.ps1.
       LAMBDA_MEMORY: 3008
       LAMBDA_TIMEOUT: 120
+      # Frontend hosting: S3 bucket behind the CloudFront distribution. CI builds
+      # and syncs the React app here so a push ships BOTH the Lambda API and the
+      # frontend (previously the frontend was a manual deploy/cloudfront.ps1 step).
+      FRONTEND_BUCKET: fraudlens-frontend-869494436489
+      CLOUDFRONT_DISTRIBUTION_ID: E3O5TZC22IXD8K
     steps:
       - uses: actions/checkout@v4
 
@@ -182,3 +187,24 @@ jobs:
           aws lambda wait function-updated \
             --function-name "$LAMBDA_FUNCTION" --region "$AWS_REGION"
           echo "Deployed $IMAGE_SHA to Lambda $LAMBDA_FUNCTION (${LAMBDA_MEMORY}MB)"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build frontend
+        working-directory: frontend
+        # .env.production sets VITE_API_BASE="" so the app calls the API same-origin
+        # through CloudFront (no CORS). npm ci for a clean, lockfile-exact install.
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy frontend to S3 + invalidate CloudFront
+        run: |
+          aws s3 sync frontend/dist "s3://$FRONTEND_BUCKET" --delete
+          aws cloudfront create-invalidation \
+            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/*" >/dev/null
+          echo "Frontend synced to s3://$FRONTEND_BUCKET and CloudFront invalidated"
