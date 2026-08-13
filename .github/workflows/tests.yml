@@ -10,6 +10,10 @@ jobs:
   api-tests:
     name: API tests (pytest)
     runs-on: ubuntu-latest
+    # Skip the agent-stack pre-warm: its background torch/sentence-transformers
+    # import would contend for the GIL and blow the /health latency budget.
+    env:
+      DISABLE_AGENT_WARM: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -33,6 +37,9 @@ jobs:
     name: UI tests (Selenium + pytest)
     runs-on: ubuntu-latest
     needs: api-tests
+    # Keep the uvicorn backend lean during Selenium runs (see api-tests note).
+    env:
+      DISABLE_AGENT_WARM: "1"
     steps:
       - uses: actions/checkout@v4
 

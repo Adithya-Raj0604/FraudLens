@@ -13,9 +13,11 @@ interface Props {
   events: SSEEvent[]
   status: "idle" | "running" | "done" | "error"
   errorMessage?: string
+  /** Transient status line (e.g. cold-start warmup / retry progress). */
+  notice?: string
 }
 
-export default function InvestigationFeed({ events, status, errorMessage }: Props) {
+export default function InvestigationFeed({ events, status, errorMessage, notice }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -82,9 +84,9 @@ export default function InvestigationFeed({ events, status, errorMessage }: Prop
         })}
 
         {status === "running" && paired.length === 0 && (
-          <div className="flex items-center gap-2 text-sm text-slate-400">
-            <Loader size={14} className="animate-spin" />
-            <span>Agent is initialising…</span>
+          <div className="flex items-start gap-2 text-sm text-slate-400">
+            <Loader size={14} className="animate-spin shrink-0 mt-0.5" />
+            <span>{notice ?? "Agent is initialising…"}</span>
           </div>
         )}
 

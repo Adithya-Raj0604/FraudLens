@@ -52,13 +52,52 @@ def load_anthropic_key_from_ssm() -> None:
     print(f"Loaded ANTHROPIC_API_KEY from SSM parameter '{param_name}'")
 
 
+# ── Agent-stack pre-warm ────────────────────────────────────────────────────────
+# /investigate lazy-imports src.agent.graph, which cascades into the heavy stack:
+# torch + sentence-transformers (model load) + faiss (index load) + langgraph +
+# building the ReAct agent. On a cold Lambda that first import can exceed
+# CloudFront's 60s origin timeout → 504.
+#
+# We do that import SYNCHRONOUSLY here in lifespan (i.e. during Lambda's init
+# phase), NOT in a background thread. On Lambda the execution environment is
+# frozen the instant a request returns, so a background thread started per-request
+# would only get CPU in tiny slices during each /health poll and never finish the
+# import. Init, by contrast, runs to completion with full CPU before the container
+# serves anything — so once it's ready, the very first /investigate is already warm.
+# The /health poll from the frontend then keeps the container from going idle.
+
+_agent_ready = False
+
+
+def _warm_agent_stack() -> None:
+    global _agent_ready
+    try:
+        print("Warming agent stack (torch + sentence-transformers + faiss + langgraph)...")
+        import src.agent.graph  # noqa: F401 — import side effects do the warming
+        _agent_ready = True
+        print("Agent stack warm — /investigate will skip the cold import.")
+    except Exception:
+        # Never let a warm failure crash startup — /investigate can still lazy-import.
+        import traceback
+        traceback.print_exc()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load model + SHAP explainer once at startup."""
+    """Load model + SHAP explainer, then synchronously warm the agent stack.
+
+    Set DISABLE_AGENT_WARM=1 to skip the agent warm (used by CI, where the heavy
+    torch/sentence-transformers import would slow the suite and needs no live key).
+    """
     load_anthropic_key_from_ssm()
 
     print("Loading model + SHAP explainer...")
     inference.load_model_state()
+
+    # Synchronous, during init — see the note above on Lambda freeze behaviour.
+    # Runs after the SSM key load so ChatAnthropic builds with a valid key.
+    if not os.environ.get("DISABLE_AGENT_WARM"):
+        _warm_agent_stack()
 
     print(f"Ready — threshold={state.threshold:.4f}")
     yield
@@ -152,6 +191,9 @@ def health():
     return {
         "status": "ok",
         "model_loaded": state.model is not None,
+        # True once the heavy agent stack (torch/ST/faiss/langgraph) has finished
+        # importing — i.e. /investigate will respond without a cold import.
+        "agent_ready": _agent_ready,
         "threshold": state.threshold,
         # Set to the deploying commit SHA in CI so /health confirms which build
         # is live; defaults to "dev" for local runs.

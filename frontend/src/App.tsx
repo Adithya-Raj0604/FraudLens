@@ -5,7 +5,7 @@ import InvestigationFeed from "./components/InvestigationFeed"
 import InvestigatorReport from "./components/InvestigatorReport"
 import ShapChart from "./components/ShapChart"
 import ApiStatus from "./components/ApiStatus"
-import { streamInvestigation, fetchExplanation } from "./api/fraudApi"
+import { streamInvestigation, fetchExplanation, MAX_RETRIES } from "./api/fraudApi"
 import type { TransactionInput, SSEEvent, SHAPFeature, InvestigationStatus } from "./types"
 
 export default function App() {
@@ -14,16 +14,25 @@ export default function App() {
   const [shapFeatures, setShapFeatures] = useState<SHAPFeature[]>([])
   const [status, setStatus] = useState<InvestigationStatus>("idle")
   const [errorMessage, setErrorMessage] = useState<string | undefined>()
+  const [notice, setNotice] = useState<string | undefined>()
 
   const handleSubmit = useCallback(async (tx: TransactionInput) => {
     setEvents([])
     setReport(null)
     setShapFeatures([])
     setErrorMessage(undefined)
+    setNotice("Starting the agent — the first run after idle can take up to a minute while it initialises…")
     setStatus("running")
 
     try {
-      for await (const event of streamInvestigation(tx)) {
+      for await (const event of streamInvestigation(tx, {
+        onRetry: (attempt) =>
+          setNotice(
+            `The agent is still waking up (cold start). Retrying… (attempt ${attempt + 1} of ${MAX_RETRIES + 1})`
+          ),
+      })) {
+        // First streamed event means the agent is live — clear the waiting notice.
+        setNotice(undefined)
         if (event.type === "report") {
           setReport(event.content)
           setStatus("done")
@@ -38,6 +47,7 @@ export default function App() {
         }
       }
     } catch (e) {
+      setNotice(undefined)
       setErrorMessage(e instanceof Error ? e.message : String(e))
       setStatus("error")
     }
@@ -60,7 +70,7 @@ export default function App() {
         <TransactionForm onSubmit={handleSubmit} disabled={status === "running"} />
 
         <div className="space-y-6">
-          <InvestigationFeed events={events} status={status} errorMessage={errorMessage} />
+          <InvestigationFeed events={events} status={status} errorMessage={errorMessage} notice={notice} />
           {report && <InvestigatorReport content={report} />}
           {shapFeatures.length > 0 && <ShapChart features={shapFeatures} />}
         </div>
